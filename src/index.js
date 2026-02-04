@@ -29,6 +29,13 @@
 export { default as calculateAstrology } from './calculators/astrology.js';
 export { default as calculateHumanDesign, calculateGeneKeys } from './calculators/humandesign.js';
 export { default as calculateVedic } from './calculators/vedic.js';
+export {
+  default as calculateAstroCartography,
+  getLinesAtLocation,
+  getLocationReport,
+  PLANET_INFO as ACG_PLANET_INFO,
+  ANGLE_INFO as ACG_ANGLE_INFO
+} from './calculators/astrocartography.js';
 
 // Compatibility calculators
 export {

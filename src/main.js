@@ -1103,27 +1103,11 @@ function initProfilePicker() {
     document.getElementById('birth-date').value = profile.birthDate;
     document.getElementById('birth-time').value = profile.birthTime || '12:00';
 
-    // If cached data exists, use it directly
-    if (profile.cachedData) {
-      calculatedData = {
-        astrology: profile.cachedData.astrology,
-        humandesign: profile.cachedData.humanDesign,
-        genekeys: profile.cachedData.geneKeys,
-        compatibility: null
-      };
+    // Update location display
+    if (profile.location) {
+      const selectedDiv = document.getElementById('location-selected');
+      const input = document.getElementById('birth-city');
 
-      renderAstrology(profile.cachedData.astrology);
-      renderHumanDesign(profile.cachedData.humanDesign);
-      renderGeneKeys(profile.cachedData.geneKeys);
-      resultsSection.style.display = 'block';
-
-      currentBirthInfo = {
-        date: profile.birthDate,
-        time: profile.birthTime,
-        location: profile.location
-      };
-    } else if (profile.location) {
-      // Calculate fresh
       selectedLocation = {
         lat: profile.location.lat,
         lon: profile.location.lon,
@@ -1132,6 +1116,23 @@ function initProfilePicker() {
         name: profile.location.name
       };
 
+      const effectiveTz = selectedLocation.timezone;
+      const tzStr = effectiveTz >= 0 ? `UTC+${effectiveTz}` : `UTC${effectiveTz}`;
+      selectedDiv.innerHTML = `
+        <span>${profile.location.name || 'Unknown'}</span>
+        <span class="location-coords">(${profile.location.lat.toFixed(2)}, ${profile.location.lon.toFixed(2)} ${tzStr})</span>
+        <button type="button" class="clear-location" title="Clear">×</button>
+      `;
+      selectedDiv.classList.add('active');
+      input.placeholder = 'Change location...';
+
+      selectedDiv.querySelector('.clear-location').addEventListener('click', () => {
+        selectedLocation = null;
+        selectedDiv.classList.remove('active');
+        input.placeholder = 'Search city...';
+      });
+
+      // Calculate chart fresh (no more cached data)
       await calculateNatalChart(profile.birthDate, profile.birthTime || '12:00', {
         lat: profile.location.lat,
         lon: profile.location.lon,
@@ -1191,12 +1192,8 @@ function initProfilePicker() {
       name,
       birthDate: currentBirthInfo.date,
       birthTime: currentBirthInfo.time,
-      location: currentBirthInfo.location,
-      cachedData: {
-        astrology: calculatedData.astrology,
-        humanDesign: calculatedData.humandesign,
-        geneKeys: calculatedData.genekeys
-      }
+      location: currentBirthInfo.location
+      // Note: We no longer cache chart data - charts are calculated on demand
     });
 
     // Hide form and show button
@@ -1238,25 +1235,266 @@ function initProfilePicker() {
   return { updateProfileDropdowns };
 }
 
-// Comparison functionality
+// Comparison functionality - standalone section with profile/manual entry modes
 function initComparison() {
   const compareBtn = document.getElementById('compare-btn');
   const compareBtnText = compareBtn?.querySelector('.compare-btn-text');
   const compareBtnLoading = compareBtn?.querySelector('.compare-btn-loading');
-  const comparePersonA = document.getElementById('compare-person-a');
-  const comparePersonB = document.getElementById('compare-person-b');
+  const resultsWrapper = document.getElementById('compatibility-results-wrapper');
   const resultsDiv = document.getElementById('compatibility-results');
-  const previewA = document.getElementById('preview-a');
-  const previewB = document.getElementById('preview-b');
-  const profileCardA = document.getElementById('profile-card-a');
-  const profileCardB = document.getElementById('profile-card-b');
   const noProfilesHint = document.getElementById('no-profiles-hint');
 
   if (!compareBtn) return;
 
-  // Update preview when selection changes
-  const updatePreview = (selectEl, previewEl, cardEl) => {
-    const value = selectEl.value;
+  // State for manual entry locations
+  const compatLocations = {
+    a: null,
+    b: null
+  };
+
+  // Toggle between profile and manual entry modes
+  document.querySelectorAll('.compat-person-toggle .toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const person = btn.dataset.person;
+      const mode = btn.dataset.mode;
+
+      // Update button states
+      const container = btn.closest('.compat-person-toggle');
+      container.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Show/hide appropriate content
+      const profileContent = document.getElementById(`compat-${person}-profile`);
+      const manualContent = document.getElementById(`compat-${person}-manual`);
+
+      if (mode === 'profile') {
+        profileContent.style.display = 'block';
+        manualContent.style.display = 'none';
+      } else {
+        profileContent.style.display = 'none';
+        manualContent.style.display = 'block';
+      }
+    });
+  });
+
+  // Setup location autocomplete for inline compatibility forms
+  ['a', 'b'].forEach(person => {
+    const input = document.getElementById(`compat-${person}-location`);
+    const dropdown = document.getElementById(`compat-${person}-dropdown`);
+    const selectedDiv = document.getElementById(`compat-${person}-selected`);
+
+    if (!input || !dropdown) return;
+
+    let highlightedIndex = -1;
+
+    const showDropdown = (html) => {
+      dropdown.innerHTML = html;
+      dropdown.classList.add('active');
+    };
+
+    const hideDropdown = () => {
+      dropdown.classList.remove('active');
+      highlightedIndex = -1;
+    };
+
+    const selectLocation = (location) => {
+      // Auto-detect DST based on birth date
+      const dateInput = document.getElementById(`compat-${person}-date`);
+      let autoDST = false;
+
+      if (dateInput?.value) {
+        const [year, month, day] = dateInput.value.split('-').map(Number);
+        autoDST = isDSTForDate(location.country, location.region, year, month, day);
+      }
+
+      compatLocations[person] = {
+        lat: location.lat,
+        lon: location.lon,
+        timezone: location.timezone + (autoDST ? 1 : 0),
+        name: location.name,
+        country: location.country,
+        region: location.region
+      };
+
+      input.value = '';
+      hideDropdown();
+
+      const effectiveTz = compatLocations[person].timezone;
+      const tzStr = effectiveTz >= 0 ? `UTC+${effectiveTz}` : `UTC${effectiveTz}`;
+      selectedDiv.innerHTML = `
+        <span>${location.name || 'Unknown'}${location.region ? ', ' + location.region : ''}${location.country ? ', ' + location.country : ''}</span>
+        <span class="location-coords">(${location.lat.toFixed(2)}, ${location.lon.toFixed(2)} ${tzStr})</span>
+        <button type="button" class="clear-compat-location" title="Clear">×</button>
+      `;
+      selectedDiv.classList.add('active');
+      input.placeholder = 'Change location...';
+
+      selectedDiv.querySelector('.clear-compat-location').addEventListener('click', () => {
+        compatLocations[person] = null;
+        selectedDiv.classList.remove('active');
+        selectedDiv.innerHTML = '';
+        input.placeholder = 'Search city...';
+      });
+    };
+
+    const debouncedSearch = debounce(async (query) => {
+      if (query.length < 2) {
+        hideDropdown();
+        return;
+      }
+
+      showDropdown('<div class="location-loading">Searching...</div>');
+
+      const results = await searchLocations(query);
+
+      if (results.length === 0) {
+        showDropdown('<div class="location-no-results">No locations found</div>');
+        return;
+      }
+
+      const optionsHtml = results.map((loc, index) => `
+        <div class="location-option" data-index="${index}">
+          <div class="location-name">${loc.name || 'Unknown'}${loc.region ? ', ' + loc.region : ''}</div>
+          <div class="location-details">${loc.country} · ${loc.lat.toFixed(2)}, ${loc.lon.toFixed(2)}</div>
+        </div>
+      `).join('');
+
+      showDropdown(optionsHtml);
+
+      dropdown.querySelectorAll('.location-option').forEach((option, index) => {
+        option.addEventListener('click', () => selectLocation(results[index]));
+      });
+    }, 300);
+
+    input.addEventListener('input', (e) => debouncedSearch(e.target.value));
+
+    input.addEventListener('keydown', (e) => {
+      const options = dropdown.querySelectorAll('.location-option');
+      if (!options.length) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlightedIndex = Math.min(highlightedIndex + 1, options.length - 1);
+        options.forEach((opt, i) => opt.classList.toggle('highlighted', i === highlightedIndex));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlightedIndex = Math.max(highlightedIndex - 1, 0);
+        options.forEach((opt, i) => opt.classList.toggle('highlighted', i === highlightedIndex));
+      } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+        e.preventDefault();
+        options[highlightedIndex].click();
+      } else if (e.key === 'Escape') {
+        hideDropdown();
+      }
+    });
+
+    input.addEventListener('blur', () => setTimeout(hideDropdown, 200));
+    input.addEventListener('focus', () => {
+      if (input.value.length >= 2) debouncedSearch(input.value);
+    });
+  });
+
+  // Helper to calculate chart from birth info
+  async function calculateChartForPerson(birthDate, birthTime, location) {
+    const timeParts = birthTime.split(':');
+    const birthHour = parseInt(timeParts[0], 10) + (parseInt(timeParts[1], 10) / 60);
+
+    const astrology = calculateAstrology(
+      birthDate,
+      birthHour,
+      location.timezone,
+      location.lat,
+      location.lon
+    );
+
+    const vedic = calculateVedic(
+      birthDate,
+      birthHour,
+      location.timezone,
+      location.lat,
+      location.lon
+    );
+
+    const humanDesign = calculateHumanDesign(birthDate, birthHour, location.timezone);
+    const geneKeys = calculateGeneKeys(humanDesign);
+
+    return { astrology, vedic, humanDesign, geneKeys };
+  }
+
+  // Helper to get current mode for a person
+  const getPersonMode = (person) => {
+    const activeBtn = document.querySelector(`.compat-person-toggle .toggle-btn.active[data-person="${person}"]`);
+    return activeBtn?.dataset.mode || 'profile';
+  };
+
+  // Helper to get chart data for a person (profile or manual)
+  async function getChartForPerson(person) {
+    const mode = getPersonMode(person);
+
+    if (mode === 'profile') {
+      const select = document.getElementById(`compare-person-${person}`);
+      const value = select?.value;
+
+      if (value === 'current') {
+        // Use current chart from main calculator
+        if (!calculatedData.astrology) {
+          throw new Error(`Person ${person.toUpperCase()}: Please calculate a chart first (set to "Current Chart")`);
+        }
+        return {
+          astrology: calculatedData.astrology,
+          vedic: calculatedData.vedic,
+          humanDesign: calculatedData.humandesign,
+          geneKeys: calculatedData.genekeys
+        };
+      } else if (value) {
+        // Load from saved profile and calculate
+        const profile = getProfile(value);
+        if (!profile) {
+          throw new Error(`Person ${person.toUpperCase()}: Profile not found`);
+        }
+        if (!profile.location) {
+          throw new Error(`Person ${person.toUpperCase()}: Profile has no location data`);
+        }
+        return await calculateChartForPerson(
+          profile.birthDate,
+          profile.birthTime || '12:00',
+          {
+            lat: profile.location.lat,
+            lon: profile.location.lon,
+            timezone: profile.location.timezone || Math.round(profile.location.lon / 15)
+          }
+        );
+      } else {
+        throw new Error(`Person ${person.toUpperCase()}: Please select a profile`);
+      }
+    } else {
+      // Manual entry mode
+      const dateInput = document.getElementById(`compat-${person}-date`);
+      const timeInput = document.getElementById(`compat-${person}-time`);
+      const location = compatLocations[person];
+
+      if (!dateInput?.value) {
+        throw new Error(`Person ${person.toUpperCase()}: Please enter birth date`);
+      }
+      if (!location) {
+        throw new Error(`Person ${person.toUpperCase()}: Please select a location`);
+      }
+
+      return await calculateChartForPerson(
+        dateInput.value,
+        timeInput?.value || '12:00',
+        location
+      );
+    }
+  }
+
+  // Update profile selection preview
+  const updateProfilePreview = (person) => {
+    const select = document.getElementById(`compare-person-${person}`);
+    const previewEl = document.getElementById(`preview-${person}`);
+    if (!select || !previewEl) return;
+
+    const value = select.value;
 
     if (value === 'current') {
       if (calculatedData.astrology) {
@@ -1264,44 +1502,37 @@ function initComparison() {
         const moon = calculatedData.astrology.moon?.sign?.symbol || '';
         const type = calculatedData.humandesign?.type?.name || '';
         previewEl.innerHTML = `
-          <div class="preview-signs">
+          <div class="preview-summary">
             <span class="preview-sign" title="Sun">${sun}</span>
             <span class="preview-sign" title="Moon">${moon}</span>
+            <span class="preview-type">${type}</span>
           </div>
-          <div>${type}</div>
         `;
-        cardEl?.classList.add('has-selection');
       } else {
-        previewEl.innerHTML = '<em>Calculate chart first</em>';
-        cardEl?.classList.remove('has-selection');
+        previewEl.innerHTML = '<em class="preview-hint">Calculate chart above first</em>';
       }
     } else if (value) {
       const profile = getProfile(value);
-      if (profile?.cachedData) {
-        const sun = profile.cachedData.astrology?.sun?.sign?.symbol || '';
-        const moon = profile.cachedData.astrology?.moon?.sign?.symbol || '';
-        const type = profile.cachedData.humanDesign?.type?.name || '';
+      if (profile) {
         previewEl.innerHTML = `
-          <div class="preview-signs">
-            <span class="preview-sign" title="Sun">${sun}</span>
-            <span class="preview-sign" title="Moon">${moon}</span>
+          <div class="preview-summary">
+            <span class="preview-date">${profile.birthDate}</span>
+            <span class="preview-location">${profile.location?.name || 'Unknown'}</span>
           </div>
-          <div>${type}</div>
         `;
-        cardEl?.classList.add('has-selection');
       }
     } else {
       previewEl.innerHTML = '';
-      cardEl?.classList.remove('has-selection');
     }
   };
 
-  comparePersonA?.addEventListener('change', () => updatePreview(comparePersonA, previewA, profileCardA));
-  comparePersonB?.addEventListener('change', () => updatePreview(comparePersonB, previewB, profileCardB));
+  // Add change listeners to profile selects
+  document.getElementById('compare-person-a')?.addEventListener('change', () => updateProfilePreview('a'));
+  document.getElementById('compare-person-b')?.addEventListener('change', () => updateProfilePreview('b'));
 
   // Initial preview update
   setTimeout(() => {
-    updatePreview(comparePersonA, previewA, profileCardA);
+    updateProfilePreview('a');
 
     // Show hint if no profiles
     const profiles = getProfiles();
@@ -1310,62 +1541,28 @@ function initComparison() {
     }
   }, 100);
 
-  // Update preview when chart is calculated
+  // Update preview when main chart is calculated
   window.addEventListener('chartCalculated', () => {
-    updatePreview(comparePersonA, previewA, profileCardA);
+    updateProfilePreview('a');
   });
 
+  // Compare button click handler
   compareBtn.addEventListener('click', async () => {
-    const personAId = comparePersonA.value;
-    const personBId = comparePersonB.value;
-
-    if (!personBId) {
-      // Highlight Person B card
-      profileCardB?.classList.add('needs-selection');
-      setTimeout(() => profileCardB?.classList.remove('needs-selection'), 1500);
-      return;
-    }
-
-    // Get charts for both people
-    let chartA, chartB;
-
-    if (personAId === 'current') {
-      if (!calculatedData.astrology) {
-        alert('Please calculate a chart first (Person A is set to "Current Chart")');
-        return;
-      }
-      chartA = {
-        astrology: calculatedData.astrology,
-        humanDesign: calculatedData.humandesign,
-        geneKeys: calculatedData.genekeys
-      };
-    } else {
-      const profileA = getProfile(personAId);
-      if (!profileA?.cachedData) {
-        alert('Profile A has no cached data. Please load and calculate it first.');
-        return;
-      }
-      chartA = profileA.cachedData;
-    }
-
-    const profileB = getProfile(personBId);
-    if (!profileB?.cachedData) {
-      alert('Profile B has no cached data. Please load and calculate it first.');
-      return;
-    }
-    chartB = profileB.cachedData;
-
-    // Get selected systems
-    const includeAstrology = document.getElementById('compare-astrology').checked;
-    const includeHD = document.getElementById('compare-humandesign').checked;
-    const includeGK = document.getElementById('compare-genekeys').checked;
-
     // Show loading state
     compareBtn.disabled = true;
     if (compareBtnText) compareBtnText.style.display = 'none';
     if (compareBtnLoading) compareBtnLoading.style.display = 'flex';
 
     try {
+      // Get charts for both people (calculates on the fly)
+      const chartA = await getChartForPerson('a');
+      const chartB = await getChartForPerson('b');
+
+      // Get selected systems
+      const includeAstrology = document.getElementById('compare-astrology').checked;
+      const includeHD = document.getElementById('compare-humandesign').checked;
+      const includeGK = document.getElementById('compare-genekeys').checked;
+
       const results = {};
 
       if (includeAstrology && chartA.astrology && chartB.astrology) {
@@ -1382,12 +1579,14 @@ function initComparison() {
 
       calculatedData.compatibility = results;
       renderCompatibilityResults(results, chartA, chartB);
-      resultsDiv.style.display = 'block';
-      document.querySelector('.compatibility-intro').style.display = 'none';
+      resultsWrapper.style.display = 'block';
+
+      // Scroll to results
+      resultsWrapper.scrollIntoView({ behavior: 'smooth' });
 
     } catch (error) {
       console.error('Comparison error:', error);
-      alert('Error comparing charts: ' + error.message);
+      alert(error.message || 'Error comparing charts');
     } finally {
       compareBtn.disabled = false;
       if (compareBtnText) compareBtnText.style.display = '';

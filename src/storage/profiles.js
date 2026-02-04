@@ -2,21 +2,20 @@
  * Profile Storage Module
  *
  * Manages user profiles in localStorage for chart comparison.
+ * Stores only birth information - charts are calculated on demand.
  * No backend required - all data stored locally in browser.
  */
 
 const STORAGE_KEY = 'natalengine_profiles';
-const MAX_PROFILES = 20; // Prevent localStorage bloat
+const MAX_PROFILES = 50; // Lightweight storage now, can have more profiles
 
 /**
  * Generate a UUID for profile IDs
  */
 function generateId() {
-  // Use crypto.randomUUID if available, otherwise fallback
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  // Fallback for older environments
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -31,7 +30,15 @@ function generateId() {
 export function getProfiles() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    if (!data) return [];
+
+    const profiles = JSON.parse(data);
+
+    // Migration: strip out old cachedData if present
+    return profiles.map(p => {
+      const { cachedData, ...cleanProfile } = p;
+      return cleanProfile;
+    });
   } catch (e) {
     console.error('Error reading profiles:', e);
     return [];
@@ -46,24 +53,39 @@ export function getProfiles() {
  * @param {string} profile.birthDate - Birth date "YYYY-MM-DD"
  * @param {string} profile.birthTime - Birth time "HH:MM"
  * @param {Object} [profile.location] - Location data
- * @param {Object} [profile.cachedData] - Cached calculation results
+ * @param {number} profile.location.lat - Latitude
+ * @param {number} profile.location.lon - Longitude
+ * @param {number} profile.location.timezone - UTC offset
+ * @param {string} [profile.location.name] - Location display name
  * @returns {Object} The saved profile with id
  */
 export function saveProfile(profile) {
   const profiles = getProfiles();
   const now = new Date().toISOString();
 
+  // Only save birth info, not cached chart data
+  const cleanProfile = {
+    id: profile.id || generateId(),
+    name: profile.name || 'Unnamed Profile',
+    birthDate: profile.birthDate,
+    birthTime: profile.birthTime || '12:00',
+    location: profile.location ? {
+      lat: profile.location.lat,
+      lon: profile.location.lon,
+      timezone: profile.location.timezone,
+      name: profile.location.name || null
+    } : null,
+    createdAt: profile.createdAt || now,
+    updatedAt: now
+  };
+
   if (profile.id) {
     // Update existing profile
     const index = profiles.findIndex(p => p.id === profile.id);
     if (index >= 0) {
-      profiles[index] = {
-        ...profiles[index],
-        ...profile,
-        updatedAt: now
-      };
+      profiles[index] = cleanProfile;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
-      return profiles[index];
+      return cleanProfile;
     }
   }
 
@@ -72,20 +94,9 @@ export function saveProfile(profile) {
     throw new Error(`Maximum of ${MAX_PROFILES} profiles allowed. Please delete some profiles first.`);
   }
 
-  const newProfile = {
-    id: generateId(),
-    name: profile.name || 'Unnamed Profile',
-    birthDate: profile.birthDate,
-    birthTime: profile.birthTime || '12:00',
-    location: profile.location || null,
-    cachedData: profile.cachedData || null,
-    createdAt: now,
-    updatedAt: now
-  };
-
-  profiles.push(newProfile);
+  profiles.push(cleanProfile);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
-  return newProfile;
+  return cleanProfile;
 }
 
 /**
@@ -130,20 +141,6 @@ export function renameProfile(id, newName) {
 }
 
 /**
- * Update cached calculation data for a profile
- * @param {string} id - Profile ID
- * @param {Object} cachedData - Calculated astrology/HD/GK data
- * @returns {Object|null} Updated profile or null if not found
- */
-export function updateProfileCache(id, cachedData) {
-  const profile = getProfile(id);
-  if (profile) {
-    return saveProfile({ ...profile, cachedData });
-  }
-  return null;
-}
-
-/**
  * Clear all profiles (use with caution)
  */
 export function clearAllProfiles() {
@@ -172,19 +169,23 @@ export function importProfiles(jsonString, merge = true) {
       throw new Error('Invalid profile data format');
     }
 
+    // Clean imported profiles (strip cachedData)
+    const cleanedProfiles = importedProfiles.map(p => {
+      const { cachedData, ...clean } = p;
+      return clean;
+    });
+
     if (merge) {
       const existing = getProfiles();
       const existingIds = new Set(existing.map(p => p.id));
 
-      // Add only profiles that don't already exist
-      const newProfiles = importedProfiles.filter(p => !existingIds.has(p.id));
+      const newProfiles = cleanedProfiles.filter(p => !existingIds.has(p.id));
       const merged = [...existing, ...newProfiles].slice(0, MAX_PROFILES);
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
       return newProfiles.length;
     } else {
-      // Replace all
-      const trimmed = importedProfiles.slice(0, MAX_PROFILES);
+      const trimmed = cleanedProfiles.slice(0, MAX_PROFILES);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
       return trimmed.length;
     }
@@ -200,7 +201,6 @@ export default {
   saveProfile,
   deleteProfile,
   renameProfile,
-  updateProfileCache,
   clearAllProfiles,
   exportProfiles,
   importProfiles

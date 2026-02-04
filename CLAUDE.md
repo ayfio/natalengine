@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-NatalEngine is a birth chart calculation engine for Western Astrology, Vedic (Jyotish) Astrology, Human Design, and Gene Keys. It provides clean, structured data output for apps and AI integrations - no interpretations, just the facts.
+NatalEngine is a birth chart calculation engine for Western Astrology, Vedic (Jyotish) Astrology, Human Design, Gene Keys, and Astro Cartography. It provides clean, structured data output for apps and AI integrations - no interpretations, just the facts.
 
 ## Key Commands
 
@@ -23,7 +23,7 @@ npm run mcp          # Start MCP server directly
 
 ```
 src/
-├── index.js              # Main exports (calculateAstrology, calculateVedic, calculateHumanDesign, calculateGeneKeys)
+├── index.js              # Main exports (calculateAstrology, calculateVedic, calculateHumanDesign, calculateGeneKeys, calculateAstroCartography)
 ├── main.js               # Browser UI entry point
 ├── styles.css            # UI styles with dark mode support
 ├── geocode.js            # Location autocomplete & timezone detection
@@ -31,11 +31,13 @@ src/
 │   ├── astrology.js      # Western natal chart calculations
 │   ├── vedic.js          # Vedic (Jyotish) astrology with Lahiri ayanamsa
 │   ├── humandesign.js    # Human Design chart calculations
+│   ├── astrocartography.js # Locational astrology / planetary lines on map
 │   └── astronomy.js      # Planetary position calculations (VSOP87)
 ├── components/
-│   ├── astrology-chart.js  # SVG zodiac wheel renderer
-│   ├── bodygraph.js        # SVG Human Design bodygraph renderer
-│   └── genekeys-chart.js   # SVG Gene Keys hologenetic profile renderer
+│   ├── astrology-chart.js    # SVG zodiac wheel renderer
+│   ├── bodygraph.js          # SVG Human Design bodygraph renderer
+│   ├── genekeys-chart.js     # SVG Gene Keys hologenetic profile renderer
+│   └── astrocartography-map.js # SVG world map with planetary lines
 ├── data/                 # Static data files (zodiac signs, gates, channels, etc.)
 ├── lib/                  # Utility functions
 └── mcp/
@@ -65,6 +67,13 @@ src/
 - Derives from Human Design gate data
 - Three sequences: Activation, Venus, Pearl
 - Each key has shadow, gift, and siddhi expressions
+
+### Astro Cartography (`src/calculators/astrocartography.js`)
+- Locational astrology showing where planets are angular globally
+- Calculates MC/IC lines (meridians) and ASC/DSC lines (curves)
+- Finds parans (line crossings) for powerful locations
+- Location reports show active lines at any place on Earth
+- Includes interpretations for each planet-angle combination
 
 ## UI Components
 
@@ -97,6 +106,14 @@ The browser interface (`index.html` + `main.js`) features:
 - Labels and key numbers rendered inside each sphere
 - Interactive tooltips with shadow/gift/siddhi
 
+**Astro Cartography Map** (`astrocartography-map.js`):
+- World map with equirectangular projection
+- Colored planetary lines (MC/IC vertical, ASC/DSC curved)
+- Paran markers at line crossings
+- Optional location markers
+- Interactive tooltips with interpretations
+- Configurable legend
+
 ## MCP Server
 
 The project includes an MCP server for AI integration:
@@ -113,7 +130,7 @@ The project includes an MCP server for AI integration:
 }
 ```
 
-Tools: `calculate_natal_chart`, `calculate_astrology`, `calculate_vedic`, `calculate_human_design`, `calculate_gene_keys`, `get_planetary_positions`
+Tools: `calculate_natal_chart`, `calculate_astrology`, `calculate_vedic`, `calculate_human_design`, `calculate_gene_keys`, `get_planetary_positions`, `calculate_astro_cartography`, `get_location_astro_report`
 
 ## Development Notes
 

@@ -123,10 +123,6 @@
             <span class="tab-icon">✦</span>
             <span class="tab-label">Gene Keys</span>
           </button>
-          <button class="tab-btn" data-tab="compatibility" role="tab" aria-selected="false">
-            <span class="tab-icon">❤</span>
-            <span class="tab-label">Compatibility</span>
-          </button>
         </div>
 
         <div class="tab-panels">
@@ -169,83 +165,137 @@
               <div class="result-content" id="genekeys-result"></div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
 
-          <div class="tab-panel" id="panel-compatibility" role="tabpanel">
-            <div class="result-card" id="compatibility-card">
-              <div class="card-header">
-                <span class="card-title">Compatibility Analysis</span>
-                <button class="export-btn" onclick="copyJSON('compatibility')">Copy JSON</button>
-              </div>
-              <div class="result-content" id="compatibility-result">
-                <div class="compatibility-intro" id="compatibility-intro">
-                  <div class="compatibility-header">
-                    <h3>Compare Charts</h3>
-                    <p>Analyze compatibility across Astrology, Human Design, and Gene Keys</p>
-                  </div>
+    <!-- Compatibility Section - Separate from individual chart tabs -->
+    <section class="compatibility-section" id="compatibility-section">
+      <div class="compatibility-card">
+        <div class="compatibility-header">
+          <h2><span class="compat-icon">❤</span> Chart Compatibility</h2>
+          <p>Compare charts across Astrology, Human Design, and Gene Keys</p>
+        </div>
 
-                  <div class="beta-notice">
-                    <strong>Beta Feature</strong> - This compatibility analysis is new and still being refined.
-                    Results should be taken with a grain of salt. Found a bug or have suggestions?
-                    <a href="https://github.com/Unforced-Dev/natal-engine/issues" target="_blank">Let us know on GitHub</a>
-                  </div>
+        <div class="beta-notice">
+          <strong>Beta Feature</strong> - This compatibility analysis is new and still being refined.
+          <a href="https://github.com/Unforced-Dev/natal-engine/issues" target="_blank">Feedback welcome on GitHub</a>
+        </div>
 
-                  <div class="compatibility-setup">
-                    <div class="profile-cards">
-                      <div class="profile-card" id="profile-card-a">
-                        <div class="profile-card-label">Person A</div>
-                        <select id="compare-person-a">
-                          <option value="current">Current Chart</option>
-                        </select>
-                        <div class="profile-card-preview" id="preview-a"></div>
-                      </div>
-
-                      <div class="vs-divider">
-                        <span>vs</span>
-                      </div>
-
-                      <div class="profile-card" id="profile-card-b">
-                        <div class="profile-card-label">Person B</div>
-                        <select id="compare-person-b">
-                          <option value="">Select profile...</option>
-                        </select>
-                        <div class="profile-card-preview" id="preview-b"></div>
-                      </div>
-                    </div>
-
-                    <div class="compare-systems">
-                      <label class="system-toggle">
-                        <input type="checkbox" id="compare-astrology" checked>
-                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                        <span class="toggle-label">☉ Astrology</span>
-                      </label>
-                      <label class="system-toggle">
-                        <input type="checkbox" id="compare-humandesign" checked>
-                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                        <span class="toggle-label">◎ Human Design</span>
-                      </label>
-                      <label class="system-toggle">
-                        <input type="checkbox" id="compare-genekeys" checked>
-                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                        <span class="toggle-label">✦ Gene Keys</span>
-                      </label>
-                    </div>
-
-                    <button class="compare-btn" id="compare-btn">
-                      <span class="compare-btn-text">Compare Charts</span>
-                      <span class="compare-btn-loading" style="display: none;">
-                        <span class="spinner"></span> Analyzing...
-                      </span>
-                    </button>
-
-                    <div class="no-profiles-hint" id="no-profiles-hint" style="display: none;">
-                      <p>Save at least one profile to compare charts. Calculate a chart and click "Save Profile" above.</p>
-                    </div>
-                  </div>
-                </div>
-                <div id="compatibility-results" style="display: none;"></div>
+        <div class="compatibility-people">
+          <!-- Person A -->
+          <div class="compat-person" id="compat-person-a">
+            <div class="compat-person-header">
+              <span class="compat-person-label">Person A</span>
+              <div class="compat-person-toggle">
+                <button type="button" class="toggle-btn active" data-mode="profile" data-person="a">Saved Profile</button>
+                <button type="button" class="toggle-btn" data-mode="manual" data-person="a">Enter Info</button>
               </div>
             </div>
+
+            <!-- Profile selection mode -->
+            <div class="compat-person-content profile-mode" id="compat-a-profile">
+              <select id="compare-person-a" class="compat-select">
+                <option value="current">Current Chart (above)</option>
+              </select>
+              <div class="compat-preview" id="preview-a"></div>
+            </div>
+
+            <!-- Manual entry mode -->
+            <div class="compat-person-content manual-mode" id="compat-a-manual" style="display: none;">
+              <div class="compat-inline-form">
+                <div class="compat-form-row">
+                  <input type="date" id="compat-a-date" placeholder="Birth date">
+                  <input type="time" id="compat-a-time" value="12:00">
+                </div>
+                <div class="compat-form-row">
+                  <input type="text" id="compat-a-location" placeholder="Search city..." class="compat-location-input" autocomplete="off">
+                  <div class="compat-location-dropdown" id="compat-a-dropdown"></div>
+                </div>
+                <div class="compat-location-selected" id="compat-a-selected"></div>
+              </div>
+              <div class="compat-preview" id="preview-a-manual"></div>
+            </div>
           </div>
+
+          <div class="vs-divider">
+            <span>vs</span>
+          </div>
+
+          <!-- Person B -->
+          <div class="compat-person" id="compat-person-b">
+            <div class="compat-person-header">
+              <span class="compat-person-label">Person B</span>
+              <div class="compat-person-toggle">
+                <button type="button" class="toggle-btn active" data-mode="profile" data-person="b">Saved Profile</button>
+                <button type="button" class="toggle-btn" data-mode="manual" data-person="b">Enter Info</button>
+              </div>
+            </div>
+
+            <!-- Profile selection mode -->
+            <div class="compat-person-content profile-mode" id="compat-b-profile">
+              <select id="compare-person-b" class="compat-select">
+                <option value="">Select a profile...</option>
+              </select>
+              <div class="compat-preview" id="preview-b"></div>
+            </div>
+
+            <!-- Manual entry mode -->
+            <div class="compat-person-content manual-mode" id="compat-b-manual" style="display: none;">
+              <div class="compat-inline-form">
+                <div class="compat-form-row">
+                  <input type="date" id="compat-b-date" placeholder="Birth date">
+                  <input type="time" id="compat-b-time" value="12:00">
+                </div>
+                <div class="compat-form-row">
+                  <input type="text" id="compat-b-location" placeholder="Search city..." class="compat-location-input" autocomplete="off">
+                  <div class="compat-location-dropdown" id="compat-b-dropdown"></div>
+                </div>
+                <div class="compat-location-selected" id="compat-b-selected"></div>
+              </div>
+              <div class="compat-preview" id="preview-b-manual"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="compare-systems">
+          <label class="system-toggle">
+            <input type="checkbox" id="compare-astrology" checked>
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">☉ Astrology</span>
+          </label>
+          <label class="system-toggle">
+            <input type="checkbox" id="compare-humandesign" checked>
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">◎ Human Design</span>
+          </label>
+          <label class="system-toggle">
+            <input type="checkbox" id="compare-genekeys" checked>
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">✦ Gene Keys</span>
+          </label>
+        </div>
+
+        <button class="compare-btn" id="compare-btn">
+          <span class="compare-btn-text">Compare Charts</span>
+          <span class="compare-btn-loading" style="display: none;">
+            <span class="spinner"></span> Analyzing...
+          </span>
+        </button>
+
+        <div class="no-profiles-hint" id="no-profiles-hint" style="display: none;">
+          <p>No saved profiles yet. Calculate a chart above and click "Save Profile", or use "Enter Info" to compare without saving.</p>
+        </div>
+      </div>
+
+      <!-- Compatibility Results -->
+      <div class="compatibility-results-wrapper" id="compatibility-results-wrapper" style="display: none;">
+        <div class="result-card">
+          <div class="card-header">
+            <span class="card-title" id="compat-results-title">Compatibility Results</span>
+            <button class="export-btn" onclick="copyJSON('compatibility')">Copy JSON</button>
+          </div>
+          <div id="compatibility-results"></div>
         </div>
       </div>
     </section>

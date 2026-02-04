@@ -35,7 +35,10 @@ import {
   calculateBirthPositions,
   compareAstrology,
   compareHumanDesign,
-  compareGeneKeys
+  compareGeneKeys,
+  calculateAstroCartography,
+  getLinesAtLocation,
+  getLocationReport
 } from '../index.js';
 
 // Import geocoding
@@ -344,6 +347,77 @@ const TOOLS = [
       },
       required: ["person_a", "person_b"]
     }
+  },
+  // Astro Cartography Tools
+  {
+    name: "calculate_astro_cartography",
+    description: "Calculate astro cartography (locational astrology) lines for a birth chart. Returns planetary lines showing where each planet is angular (on ASC, DSC, MC, or IC) across the globe. Use this for relocation astrology and finding powerful locations.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        birth_date: {
+          type: "string",
+          description: "Birth date in YYYY-MM-DD format"
+        },
+        birth_time: {
+          type: "string",
+          description: "Birth time in HH:MM format, 24-hour. Defaults to '12:00'."
+        },
+        timezone: {
+          type: "number",
+          description: "UTC timezone offset in hours"
+        },
+        planets: {
+          type: "array",
+          items: { type: "string" },
+          description: "Which planets to include (default: all). Options: sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto"
+        },
+        angles: {
+          type: "array",
+          items: { type: "string" },
+          description: "Which angles to include (default: all). Options: MC, IC, ASC, DSC"
+        }
+      },
+      required: ["birth_date"]
+    }
+  },
+  {
+    name: "get_location_astro_report",
+    description: "Get an astro cartography analysis for a specific location. Shows which planetary lines pass through or near the location and their meanings.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        birth_date: {
+          type: "string",
+          description: "Birth date in YYYY-MM-DD format"
+        },
+        birth_time: {
+          type: "string",
+          description: "Birth time in HH:MM format, 24-hour"
+        },
+        timezone: {
+          type: "number",
+          description: "UTC timezone offset in hours"
+        },
+        location: {
+          type: "string",
+          description: "Location to analyze (e.g., 'Tokyo, Japan', 'New York City')"
+        },
+        latitude: {
+          type: "number",
+          description: "Latitude of location to analyze (use this OR location)"
+        },
+        longitude: {
+          type: "number",
+          description: "Longitude of location to analyze (use this OR location)"
+        },
+        orb: {
+          type: "number",
+          description: "Orb in degrees for considering a line active (default: 3)"
+        }
+      },
+      required: ["birth_date"]
+    }
   }
 ];
 
@@ -605,6 +679,72 @@ async function handleCompareGeneKeys(args) {
   return compareGeneKeys(personA.geneKeys, personB.geneKeys);
 }
 
+// Astro Cartography handlers
+async function handleCalculateAstroCartography(args) {
+  const birthHour = parseTime(args.birth_time);
+  const timezone = args.timezone ?? 0;
+
+  const options = {};
+  if (args.planets) options.planets = args.planets;
+  if (args.angles) options.angles = args.angles;
+
+  const result = calculateAstroCartography(args.birth_date, birthHour, timezone, options);
+
+  // Simplify the response for the MCP output (lines can be very verbose)
+  return {
+    birthInfo: result.birthInfo,
+    lineCount: result.lineCount,
+    lines: result.lines.map(line => ({
+      planet: line.planetName,
+      symbol: line.planetSymbol,
+      angle: line.angle,
+      type: line.type,
+      longitude: line.longitude, // For MC/IC lines
+      interpretation: line.interpretation,
+      pointCount: line.points?.length || 0
+    })),
+    parans: result.parans.map(p => ({
+      crossing: `${p.planet1Name} ${p.angle1} × ${p.planet2Name} ${p.angle2}`,
+      location: { lat: Math.round(p.lat * 10) / 10, lon: Math.round(p.lon * 10) / 10 },
+      interpretation: p.interpretation
+    })),
+    note: result.note
+  };
+}
+
+async function handleGetLocationAstroReport(args) {
+  const birthHour = parseTime(args.birth_time);
+  const timezone = args.timezone ?? 0;
+
+  // Resolve target location
+  let targetLat, targetLon, locationName;
+
+  if (args.location) {
+    const geo = await parseLocation(args.location);
+    if (geo) {
+      targetLat = geo.lat;
+      targetLon = geo.lon;
+      locationName = args.location;
+    } else {
+      throw new Error(`Could not geocode location: ${args.location}`);
+    }
+  } else if (args.latitude !== undefined && args.longitude !== undefined) {
+    targetLat = args.latitude;
+    targetLon = args.longitude;
+    locationName = `${args.latitude}, ${args.longitude}`;
+  } else {
+    throw new Error('Either location or latitude/longitude must be provided');
+  }
+
+  // Calculate astro cartography
+  const acgData = calculateAstroCartography(args.birth_date, birthHour, timezone);
+
+  // Get location report
+  const report = getLocationReport(acgData, targetLat, targetLon, locationName);
+
+  return report;
+}
+
 // Create and configure server
 const server = new Server(
   {
@@ -660,6 +800,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "compare_gene_keys":
         result = await handleCompareGeneKeys(args);
+        break;
+      case "calculate_astro_cartography":
+        result = await handleCalculateAstroCartography(args);
+        break;
+      case "get_location_astro_report":
+        result = await handleGetLocationAstroReport(args);
         break;
       default:
         throw new Error(`Unknown tool: ${name}`);
