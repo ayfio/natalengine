@@ -9,7 +9,10 @@
     "./mcp": "./src/mcp/index.js",
     "./astrology": "./src/calculators/astrology.js",
     "./humandesign": "./src/calculators/humandesign.js",
-    "./astronomy": "./src/calculators/astronomy.js"
+    "./astronomy": "./src/calculators/astronomy.js",
+    "./bodygraph-data": "./src/data/bodygraph-svg-data.js",
+    "./gate-descriptions": "./src/data/gate-descriptions.js",
+    "./channel-descriptions": "./src/data/channel-descriptions.js"
   },
   "bin": {
     "natalengine-mcp": "src/mcp/index.js"

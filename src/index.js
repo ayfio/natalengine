@@ -52,7 +52,6 @@ export {
   saveProfile,
   deleteProfile,
   renameProfile,
-  updateProfileCache,
   clearAllProfiles,
   exportProfiles,
   importProfiles
