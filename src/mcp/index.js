@@ -421,6 +421,64 @@ const TOOLS = [
   }
 ];
 
+// Validate birth input arguments
+function validateBirthInput(args) {
+  const errors = [];
+
+  // Validate birth_date format and ranges
+  if (!args.birth_date || typeof args.birth_date !== 'string') {
+    errors.push('birth_date is required and must be a string in YYYY-MM-DD format');
+  } else if (!/^\d{4}-\d{2}-\d{2}$/.test(args.birth_date)) {
+    errors.push('birth_date must be in YYYY-MM-DD format');
+  } else {
+    const [year, month, day] = args.birth_date.split('-').map(Number);
+    if (month < 1 || month > 12) errors.push(`Invalid month: ${month} (must be 1-12)`);
+    if (day < 1 || day > 31) errors.push(`Invalid day: ${day} (must be 1-31)`);
+    if (year < 1 || year > 9999) errors.push(`Invalid year: ${year}`);
+    // Check days in month
+    if (month && day) {
+      const daysInMonth = new Date(year, month, 0).getDate();
+      if (day > daysInMonth) errors.push(`Invalid day ${day} for month ${month} (max ${daysInMonth})`);
+    }
+  }
+
+  // Validate birth_time format and ranges
+  if (args.birth_time != null) {
+    if (typeof args.birth_time !== 'string' || !/^\d{1,2}:\d{2}$/.test(args.birth_time)) {
+      errors.push('birth_time must be in HH:MM format (24-hour)');
+    } else {
+      const [hours, minutes] = args.birth_time.split(':').map(Number);
+      if (hours < 0 || hours > 23) errors.push(`Invalid hour: ${hours} (must be 0-23)`);
+      if (minutes < 0 || minutes > 59) errors.push(`Invalid minutes: ${minutes} (must be 0-59)`);
+    }
+  }
+
+  // Validate coordinates
+  if (args.latitude != null && (typeof args.latitude !== 'number' || args.latitude < -90 || args.latitude > 90)) {
+    errors.push('latitude must be a number between -90 and 90');
+  }
+  if (args.longitude != null && (typeof args.longitude !== 'number' || args.longitude < -180 || args.longitude > 180)) {
+    errors.push('longitude must be a number between -180 and 180');
+  }
+
+  // Validate timezone
+  if (args.timezone != null && (typeof args.timezone !== 'number' || args.timezone < -12 || args.timezone > 14)) {
+    errors.push('timezone must be a number between -12 and 14');
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Invalid input: ${errors.join('; ')}`);
+  }
+}
+
+// Validate comparison person input
+function validatePersonInput(person, label) {
+  if (!person || typeof person !== 'object') {
+    throw new Error(`${label} is required and must be an object with birth_date`);
+  }
+  validateBirthInput(person);
+}
+
 // Parse birth time to decimal hour
 function parseTime(timeStr) {
   if (!timeStr) return 12;
@@ -476,6 +534,7 @@ async function resolveLocation(args) {
 
 // Tool handlers
 async function handleCalculateNatalChart(args) {
+  validateBirthInput(args);
   const birthHour = parseTime(args.birth_time);
   const loc = await resolveLocation(args);
 
@@ -548,6 +607,7 @@ async function handleCalculateNatalChart(args) {
 }
 
 async function handleCalculateAstrology(args) {
+  validateBirthInput(args);
   const birthHour = parseTime(args.birth_time);
   const loc = await resolveLocation(args);
 
@@ -561,6 +621,7 @@ async function handleCalculateAstrology(args) {
 }
 
 async function handleCalculateVedic(args) {
+  validateBirthInput(args);
   const birthHour = parseTime(args.birth_time);
   const loc = await resolveLocation(args);
 
@@ -574,6 +635,7 @@ async function handleCalculateVedic(args) {
 }
 
 async function handleCalculateHumanDesign(args) {
+  validateBirthInput(args);
   const birthHour = parseTime(args.birth_time);
   const timezone = args.timezone ?? 0;
 
@@ -581,6 +643,7 @@ async function handleCalculateHumanDesign(args) {
 }
 
 async function handleCalculateGeneKeys(args) {
+  validateBirthInput(args);
   const birthHour = parseTime(args.birth_time);
   const timezone = args.timezone ?? 0;
 
@@ -589,6 +652,7 @@ async function handleCalculateGeneKeys(args) {
 }
 
 async function handleGetPlanetaryPositions(args) {
+  validateBirthInput(args);
   const { year, month, day } = parseDate(args.birth_date);
   const birthHour = parseTime(args.birth_time);
   const timezone = args.timezone ?? estimateTimezone(args.longitude);
@@ -624,6 +688,8 @@ async function calculateAllCharts(personArgs) {
 }
 
 async function handleCompareCharts(args) {
+  validatePersonInput(args.person_a, 'person_a');
+  validatePersonInput(args.person_b, 'person_b');
   const systems = args.systems || ['astrology', 'humandesign', 'genekeys'];
 
   const personA = await calculateAllCharts(args.person_a);
@@ -659,6 +725,8 @@ async function handleCompareCharts(args) {
 }
 
 async function handleCompareAstrology(args) {
+  validatePersonInput(args.person_a, 'person_a');
+  validatePersonInput(args.person_b, 'person_b');
   const personA = await calculateAllCharts(args.person_a);
   const personB = await calculateAllCharts(args.person_b);
 
@@ -666,6 +734,8 @@ async function handleCompareAstrology(args) {
 }
 
 async function handleCompareHumanDesign(args) {
+  validatePersonInput(args.person_a, 'person_a');
+  validatePersonInput(args.person_b, 'person_b');
   const personA = await calculateAllCharts(args.person_a);
   const personB = await calculateAllCharts(args.person_b);
 
@@ -673,6 +743,8 @@ async function handleCompareHumanDesign(args) {
 }
 
 async function handleCompareGeneKeys(args) {
+  validatePersonInput(args.person_a, 'person_a');
+  validatePersonInput(args.person_b, 'person_b');
   const personA = await calculateAllCharts(args.person_a);
   const personB = await calculateAllCharts(args.person_b);
 
@@ -681,6 +753,7 @@ async function handleCompareGeneKeys(args) {
 
 // Astro Cartography handlers
 async function handleCalculateAstroCartography(args) {
+  validateBirthInput(args);
   const birthHour = parseTime(args.birth_time);
   const timezone = args.timezone ?? 0;
 
@@ -713,6 +786,7 @@ async function handleCalculateAstroCartography(args) {
 }
 
 async function handleGetLocationAstroReport(args) {
+  validateBirthInput(args);
   const birthHour = parseTime(args.birth_time);
   const timezone = args.timezone ?? 0;
 

@@ -50,6 +50,9 @@
   ],
   "author": "unforced",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "devDependencies": {
     "vite": "^5.0.0"
   },

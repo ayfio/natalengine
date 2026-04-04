@@ -5,6 +5,58 @@
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 
+// Fetch timeout in milliseconds
+const FETCH_TIMEOUT_MS = 10000;
+
+// Countries/regions with non-standard UTC offsets (not divisible by 1 hour)
+// These cannot be estimated from longitude alone
+const COUNTRY_TIMEZONE_OVERRIDES = {
+  'india': 5.5,
+  'sri lanka': 5.5,
+  'nepal': 5.75,
+  'iran': 3.5,
+  'afghanistan': 4.5,
+  'myanmar': 6.5,
+  'cocos islands': 6.5,
+  'marquesas islands': -9.5,
+  'newfoundland': -3.5, // Region, handled specially
+  'chatham islands': 12.75, // Region, handled specially
+  'eucla': 8.75, // Region in Western Australia
+  'north korea': 9,
+};
+
+/**
+ * Estimate timezone from coordinates and optional country/region info.
+ * Uses country-specific overrides for half/quarter-hour zones,
+ * falls back to longitude-based estimation.
+ */
+function estimateTimezoneFromLocation(lon, country, region) {
+  const countryLower = (country || '').toLowerCase();
+  const regionLower = (region || '').toLowerCase();
+
+  // Check region-specific overrides first
+  if (regionLower.includes('newfoundland')) return -3.5;
+  if (regionLower.includes('chatham')) return 12.75;
+
+  // Check country overrides
+  for (const [key, tz] of Object.entries(COUNTRY_TIMEZONE_OVERRIDES)) {
+    if (countryLower.includes(key)) return tz;
+  }
+
+  // Fallback: estimate from longitude
+  return Math.round(lon / 15);
+}
+
+/**
+ * Create a fetch request with timeout
+ */
+function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timeout));
+}
+
 /**
  * Check if a date falls within US Daylight Saving Time
  * US DST rules:
@@ -137,7 +189,7 @@ export async function geocode(query) {
   try {
     const url = `${NOMINATIM_URL}?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`;
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         'User-Agent': 'NatalEngine/1.0 (https://github.com/unforced/natalengine)'
       }
@@ -157,21 +209,26 @@ export async function geocode(query) {
     const result = data[0];
     const lat = parseFloat(result.lat);
     const lon = parseFloat(result.lon);
+    const country = result.address?.country || '';
+    const region = result.address?.state || result.address?.region || '';
 
-    // Estimate timezone from longitude (rough approximation)
-    const timezone = Math.round(lon / 15);
+    const timezone = estimateTimezoneFromLocation(lon, country, region);
 
     return {
       lat,
       lon,
       timezone,
       name: result.address?.city || result.address?.town || result.address?.village || result.name || query,
-      region: result.address?.state || result.address?.region || '',
-      country: result.address?.country || '',
+      region,
+      country,
       displayName: result.display_name
     };
   } catch (error) {
-    console.error('Geocoding error:', error);
+    if (error.name === 'AbortError') {
+      console.error('Geocoding timed out');
+    } else {
+      console.error('Geocoding error:', error);
+    }
     return null;
   }
 }
@@ -189,7 +246,7 @@ export async function searchLocations(query) {
   try {
     const url = `${NOMINATIM_URL}?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         'User-Agent': 'NatalEngine/1.0 (https://github.com/unforced/natalengine)'
       }
@@ -201,17 +258,25 @@ export async function searchLocations(query) {
 
     const data = await response.json();
 
-    return data.map(item => ({
-      lat: parseFloat(item.lat),
-      lon: parseFloat(item.lon),
-      timezone: Math.round(parseFloat(item.lon) / 15),
-      name: item.address?.city || item.address?.town || item.address?.village || item.name,
-      region: item.address?.state || item.address?.region || '',
-      country: item.address?.country || '',
-      displayName: item.display_name
-    }));
+    return data.map(item => {
+      const country = item.address?.country || '';
+      const region = item.address?.state || item.address?.region || '';
+      return {
+        lat: parseFloat(item.lat),
+        lon: parseFloat(item.lon),
+        timezone: estimateTimezoneFromLocation(parseFloat(item.lon), country, region),
+        name: item.address?.city || item.address?.town || item.address?.village || item.name,
+        region,
+        country,
+        displayName: item.display_name
+      };
+    });
   } catch (error) {
-    console.error('Location search error:', error);
+    if (error.name === 'AbortError') {
+      console.error('Location search timed out');
+    } else {
+      console.error('Location search error:', error);
+    }
     return [];
   }
 }
@@ -227,7 +292,7 @@ export async function parseLocation(input) {
     return {
       lat: parseFloat(input.lat),
       lon: parseFloat(input.lon),
-      timezone: input.timezone ?? Math.round(parseFloat(input.lon) / 15)
+      timezone: input.timezone ?? estimateTimezoneFromLocation(parseFloat(input.lon), input.country, input.region)
     };
   }
 
@@ -242,7 +307,7 @@ export async function parseLocation(input) {
         return {
           lat,
           lon,
-          timezone: Math.round(lon / 15)
+          timezone: estimateTimezoneFromLocation(lon)
         };
       }
     }

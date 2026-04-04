@@ -14,6 +14,17 @@ import { compareAstrology, compareHumanDesign, compareGeneKeys } from './calcula
 import { renderSynastryChart } from './components/synastry-chart.js';
 import { renderCompositeBodygraph } from './components/composite-bodygraph.js';
 
+// Escape HTML to prevent XSS from user/external data
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Store calculated data for export
 let calculatedData = {
   astrology: null,
@@ -123,7 +134,7 @@ function setupLocationAutocomplete() {
       const effectiveTz = selectedLocation.timezone + (selectedLocation.isDST ? 1 : 0);
       const tzStr = effectiveTz >= 0 ? `UTC+${effectiveTz}` : `UTC${effectiveTz}`;
       selectedDiv.innerHTML = `
-        <span>${location.name || 'Unknown'}${location.region ? ', ' + location.region : ''}${location.country ? ', ' + location.country : ''}</span>
+        <span>${escapeHtml(location.name || 'Unknown')}${location.region ? ', ' + escapeHtml(location.region) : ''}${location.country ? ', ' + escapeHtml(location.country) : ''}</span>
         <span class="location-coords">(${location.lat.toFixed(2)}, ${location.lon.toFixed(2)} ${tzStr})</span>
         <button type="button" class="clear-location" title="Clear">×</button>
       `;
@@ -160,8 +171,8 @@ function setupLocationAutocomplete() {
 
     const optionsHtml = results.map((loc, index) => `
       <div class="location-option" data-index="${index}">
-        <div class="location-name">${loc.name || 'Unknown'}${loc.region ? ', ' + loc.region : ''}</div>
-        <div class="location-details">${loc.country} · ${loc.lat.toFixed(2)}, ${loc.lon.toFixed(2)}</div>
+        <div class="location-name">${escapeHtml(loc.name || 'Unknown')}${loc.region ? ', ' + escapeHtml(loc.region) : ''}</div>
+        <div class="location-details">${escapeHtml(loc.country)} · ${loc.lat.toFixed(2)}, ${loc.lon.toFixed(2)}</div>
       </div>
     `).join('');
 
@@ -837,7 +848,6 @@ async function calculateNatalChart(birthDate, birthTime, manualCoords, skipURLUp
     resultsSection.scrollIntoView({ behavior: 'smooth' });
   }
 
-  console.log('NatalEngine Data:', calculatedData);
 }
 
 // Form handler
@@ -879,7 +889,7 @@ form.addEventListener('submit', async (e) => {
     console.error('Error:', error);
     ['astrology-result', 'vedic-result', 'humandesign-result', 'genekeys-result'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+      if (el) el.innerHTML = `<div class="loading">Error: ${escapeHtml(error.message)}</div>`;
     });
   }
 });
@@ -996,7 +1006,7 @@ async function initFromURL() {
     };
 
     selectedDiv.innerHTML = `
-      <span>${locationName}</span>
+      <span>${escapeHtml(locationName)}</span>
       <span class="location-coords">(${lat.toFixed(2)}, ${lng.toFixed(2)} ${tzStr})</span>
       <button type="button" class="clear-location" title="Clear">×</button>
     `;
@@ -1030,7 +1040,7 @@ async function initFromURL() {
       console.error('Error loading from URL:', error);
       ['astrology-result', 'vedic-result', 'humandesign-result', 'genekeys-result'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+        if (el) el.innerHTML = `<div class="loading">Error: ${escapeHtml(error.message)}</div>`;
       });
     }
   }
@@ -1119,7 +1129,7 @@ function initProfilePicker() {
       const effectiveTz = selectedLocation.timezone;
       const tzStr = effectiveTz >= 0 ? `UTC+${effectiveTz}` : `UTC${effectiveTz}`;
       selectedDiv.innerHTML = `
-        <span>${profile.location.name || 'Unknown'}</span>
+        <span>${escapeHtml(profile.location.name || 'Unknown')}</span>
         <span class="location-coords">(${profile.location.lat.toFixed(2)}, ${profile.location.lon.toFixed(2)} ${tzStr})</span>
         <button type="button" class="clear-location" title="Clear">×</button>
       `;
@@ -1322,7 +1332,7 @@ function initComparison() {
       const effectiveTz = compatLocations[person].timezone;
       const tzStr = effectiveTz >= 0 ? `UTC+${effectiveTz}` : `UTC${effectiveTz}`;
       selectedDiv.innerHTML = `
-        <span>${location.name || 'Unknown'}${location.region ? ', ' + location.region : ''}${location.country ? ', ' + location.country : ''}</span>
+        <span>${escapeHtml(location.name || 'Unknown')}${location.region ? ', ' + escapeHtml(location.region) : ''}${location.country ? ', ' + escapeHtml(location.country) : ''}</span>
         <span class="location-coords">(${location.lat.toFixed(2)}, ${location.lon.toFixed(2)} ${tzStr})</span>
         <button type="button" class="clear-compat-location" title="Clear">×</button>
       `;
@@ -1354,8 +1364,8 @@ function initComparison() {
 
       const optionsHtml = results.map((loc, index) => `
         <div class="location-option" data-index="${index}">
-          <div class="location-name">${loc.name || 'Unknown'}${loc.region ? ', ' + loc.region : ''}</div>
-          <div class="location-details">${loc.country} · ${loc.lat.toFixed(2)}, ${loc.lon.toFixed(2)}</div>
+          <div class="location-name">${escapeHtml(loc.name || 'Unknown')}${loc.region ? ', ' + escapeHtml(loc.region) : ''}</div>
+          <div class="location-details">${escapeHtml(loc.country)} · ${loc.lat.toFixed(2)}, ${loc.lon.toFixed(2)}</div>
         </div>
       `).join('');
 
@@ -1516,8 +1526,8 @@ function initComparison() {
       if (profile) {
         previewEl.innerHTML = `
           <div class="preview-summary">
-            <span class="preview-date">${profile.birthDate}</span>
-            <span class="preview-location">${profile.location?.name || 'Unknown'}</span>
+            <span class="preview-date">${escapeHtml(profile.birthDate)}</span>
+            <span class="preview-location">${escapeHtml(profile.location?.name || 'Unknown')}</span>
           </div>
         `;
       }
@@ -1837,5 +1847,3 @@ document.getElementById('birth-date').addEventListener('change', (e) => {
     }
   }
 });
-
-console.log('NatalEngine loaded');
