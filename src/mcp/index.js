@@ -38,7 +38,9 @@ import {
   compareGeneKeys,
   calculateAstroCartography,
   getLinesAtLocation,
-  getLocationReport
+  getLocationReport,
+  calculateHDTransits,
+  analyzePenta
 } from '../index.js';
 
 // Import geocoding
@@ -417,6 +419,45 @@ const TOOLS = [
         }
       },
       required: ["birth_date"]
+    }
+  },
+  // HD Transit and Team Tools
+  {
+    name: "calculate_hd_transits",
+    description: "Calculate Human Design transit overlay for a natal chart. Shows which gates are currently activated by planetary transits, which hanging gates get completed, and which centers are temporarily defined.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        birth_date: { type: "string", description: "Birth date in YYYY-MM-DD format" },
+        birth_time: { type: "string", description: "Birth time in HH:MM format, 24-hour. Defaults to '12:00'." },
+        timezone: { type: "number", description: "UTC timezone offset in hours" },
+        transit_date: { type: "string", description: "Date to calculate transits for (YYYY-MM-DD). Defaults to today." }
+      },
+      required: ["birth_date"]
+    }
+  },
+  {
+    name: "analyze_team",
+    description: "Analyze a group of 2-9 people using Human Design Penta dynamics. Shows group type, role coverage, missing energies, electromagnetic connections between members, circuit balance, and team composition recommendations.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        members: {
+          type: "array",
+          description: "Array of team members, each with birth_date, birth_time (optional), timezone (optional), and name (optional)",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Person's name" },
+              birth_date: { type: "string", description: "Birth date in YYYY-MM-DD format" },
+              birth_time: { type: "string", description: "Birth time in HH:MM format, 24-hour" },
+              timezone: { type: "number", description: "UTC timezone offset" }
+            },
+            required: ["birth_date"]
+          }
+        }
+      },
+      required: ["members"]
     }
   }
 ];
@@ -819,6 +860,38 @@ async function handleGetLocationAstroReport(args) {
   return report;
 }
 
+// HD Transit handler
+async function handleCalculateHDTransits(args) {
+  validateBirthInput(args);
+  const birthHour = parseTime(args.birth_time);
+  const timezone = args.timezone ?? 0;
+
+  const chart = calculateHumanDesign(args.birth_date, birthHour, timezone);
+  const transits = calculateHDTransits(chart, args.transit_date, timezone);
+
+  return transits;
+}
+
+// Team/Penta analysis handler
+async function handleAnalyzeTeam(args) {
+  if (!args.members || !Array.isArray(args.members) || args.members.length < 2) {
+    throw new Error('At least 2 members are required for team analysis');
+  }
+
+  const charts = [];
+  const names = [];
+
+  for (const member of args.members) {
+    validateBirthInput(member);
+    const birthHour = parseTime(member.birth_time);
+    const timezone = member.timezone ?? 0;
+    charts.push(calculateHumanDesign(member.birth_date, birthHour, timezone));
+    names.push(member.name || `Member ${charts.length}`);
+  }
+
+  return analyzePenta(charts, names);
+}
+
 // Create and configure server
 const server = new Server(
   {
@@ -880,6 +953,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "get_location_astro_report":
         result = await handleGetLocationAstroReport(args);
+        break;
+      case "calculate_hd_transits":
+        result = await handleCalculateHDTransits(args);
+        break;
+      case "analyze_team":
+        result = await handleAnalyzeTeam(args);
         break;
       default:
         throw new Error(`Unknown tool: ${name}`);

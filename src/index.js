@@ -61,6 +61,10 @@ export {
 // Lower-level astronomy functions
 export { calculateBirthPositions, getZodiacSign } from './calculators/astronomy.js';
 
+// Human Design transit and team analysis
+export { calculateHDTransits, calculateTransitGates } from './calculators/hd-transits.js';
+export { analyzePenta } from './calculators/penta.js';
+
 // Data constants (for advanced users)
 export {
   GATES,
@@ -68,8 +72,18 @@ export {
   CENTERS,
   TYPES,
   PROFILES,
-  AUTHORITIES
+  AUTHORITIES,
+  CIRCUIT_GROUPS,
+  LINE_NAMES,
+  longitudeToGate,
+  longitudeToLine,
+  longitudeToColor,
+  longitudeToTone
 } from './calculators/humandesign.js';
+
+// Human Design content data
+export { GATE_DESCRIPTIONS } from './data/gate-descriptions.js';
+export { CHANNEL_DESCRIPTIONS } from './data/channel-descriptions.js';
 
 // Vedic astrology data and functions
 export {

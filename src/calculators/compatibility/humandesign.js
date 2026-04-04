@@ -396,6 +396,155 @@ function analyzeBridging(chartA, chartB, electromagnetic) {
 }
 
 /**
+ * Complete Connection Chart Analysis
+ * Classifies every channel into one of four relationship types:
+ * - Electromagnetic: Each partner has one gate, completing the channel together
+ * - Companionship: Both partners have the full channel defined
+ * - Compromise: One has the full channel, other has one gate of it
+ * - Dominance: One has the full channel, other has nothing in it
+ */
+function analyzeConnectionChart(chartA, chartB) {
+  const gatesA = new Set(chartA.gates?.all || []);
+  const gatesB = new Set(chartB.gates?.all || []);
+  const channelNamesA = new Set((chartA.channels || []).map(c => c.name));
+  const channelNamesB = new Set((chartB.channels || []).map(c => c.name));
+
+  const connections = {
+    electromagnetic: [],
+    companionship: [],
+    compromise: [],
+    dominance: []
+  };
+
+  for (const channel of CHANNELS) {
+    const [gate1, gate2] = channel.gates;
+    const aHas1 = gatesA.has(gate1), aHas2 = gatesA.has(gate2);
+    const bHas1 = gatesB.has(gate1), bHas2 = gatesB.has(gate2);
+    const aHasChannel = aHas1 && aHas2;
+    const bHasChannel = bHas1 && bHas2;
+
+    const info = {
+      channel: channel.name,
+      gates: channel.gates,
+      centers: channel.centers,
+      theme: channel.theme,
+      circuit: channel.circuit
+    };
+
+    if (aHasChannel && bHasChannel) {
+      // Companionship: both have the full channel
+      connections.companionship.push({
+        ...info,
+        type: 'companionship',
+        description: `Both share the ${channel.name} channel — mutual understanding and ease in this energy.`
+      });
+    } else if (aHasChannel && !bHas1 && !bHas2) {
+      // Dominance: A has full channel, B has nothing
+      connections.dominance.push({
+        ...info,
+        type: 'dominance',
+        dominant: 'A',
+        description: `A's ${channel.name} channel conditions B, who has no gates in this channel.`
+      });
+    } else if (bHasChannel && !aHas1 && !aHas2) {
+      // Dominance: B has full channel, A has nothing
+      connections.dominance.push({
+        ...info,
+        type: 'dominance',
+        dominant: 'B',
+        description: `B's ${channel.name} channel conditions A, who has no gates in this channel.`
+      });
+    } else if (aHasChannel && (bHas1 || bHas2)) {
+      // Compromise: A has full channel, B has one gate
+      const bGate = bHas1 ? gate1 : gate2;
+      connections.compromise.push({
+        ...info,
+        type: 'compromise',
+        dominant: 'A',
+        partialGate: bGate,
+        description: `A defines the ${channel.name} channel fully; B has Gate ${bGate} and gets pulled into A's frequency.`
+      });
+    } else if (bHasChannel && (aHas1 || aHas2)) {
+      // Compromise: B has full channel, A has one gate
+      const aGate = aHas1 ? gate1 : gate2;
+      connections.compromise.push({
+        ...info,
+        type: 'compromise',
+        dominant: 'B',
+        partialGate: aGate,
+        description: `B defines the ${channel.name} channel fully; A has Gate ${aGate} and gets pulled into B's frequency.`
+      });
+    } else if ((aHas1 && bHas2 && !aHas2 && !bHas1) || (aHas2 && bHas1 && !aHas1 && !bHas2)) {
+      // Electromagnetic: each has one gate, completing the channel together
+      const gateA = aHas1 ? gate1 : gate2;
+      const gateB = bHas1 ? gate1 : gate2;
+      connections.electromagnetic.push({
+        ...info,
+        type: 'electromagnetic',
+        gateA,
+        gateB,
+        description: `A's Gate ${gateA} meets B's Gate ${gateB}, creating the ${channel.name} channel together — new energy neither has alone.`
+      });
+    }
+  }
+
+  // Calculate composite type
+  const compositeGates = new Set([...gatesA, ...gatesB]);
+  const compositeChannels = CHANNELS.filter(ch =>
+    compositeGates.has(ch.gates[0]) && compositeGates.has(ch.gates[1])
+  );
+  const compositeCenters = new Set();
+  compositeChannels.forEach(ch => ch.centers.forEach(c => compositeCenters.add(c)));
+
+  const hasSacral = compositeCenters.has('sacral');
+  const compositeMotorToThroat = checkCompositeMotorToThroat(compositeChannels);
+
+  let compositeType = 'Projector';
+  if (!hasSacral && compositeMotorToThroat) compositeType = 'Manifestor';
+  else if (hasSacral && compositeMotorToThroat) compositeType = 'Manifesting Generator';
+  else if (hasSacral) compositeType = 'Generator';
+  else if (compositeCenters.size === 0) compositeType = 'Reflector';
+
+  return {
+    connections,
+    compositeType,
+    compositeChannelCount: compositeChannels.length,
+    compositeCenters: Array.from(compositeCenters),
+    summary: {
+      electromagnetic: connections.electromagnetic.length,
+      companionship: connections.companionship.length,
+      compromise: connections.compromise.length,
+      dominance: connections.dominance.length,
+      total: connections.electromagnetic.length + connections.companionship.length +
+             connections.compromise.length + connections.dominance.length
+    }
+  };
+}
+
+function checkCompositeMotorToThroat(channels) {
+  const motorCenters = ['sacral', 'heart', 'solar', 'root'];
+  const connections = new Map();
+  channels.forEach(ch => {
+    const [c1, c2] = ch.centers;
+    if (!connections.has(c1)) connections.set(c1, new Set());
+    if (!connections.has(c2)) connections.set(c2, new Set());
+    connections.get(c1).add(c2);
+    connections.get(c2).add(c1);
+  });
+  if (!connections.has('throat')) return false;
+  const visited = new Set(['throat']);
+  const queue = ['throat'];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (motorCenters.includes(current)) return true;
+    for (const neighbor of (connections.get(current) || [])) {
+      if (!visited.has(neighbor)) { visited.add(neighbor); queue.push(neighbor); }
+    }
+  }
+  return false;
+}
+
+/**
  * Generate summary text
  */
 function generateSummary(typeInteraction, profileHarmony, electromagnetic, sharedGates, sharedChannels) {
@@ -453,6 +602,9 @@ export function compareHumanDesign(chartA, chartB) {
   // Bridging analysis
   const bridging = analyzeBridging(chartA, chartB, electromagneticPairs);
 
+  // Full connection chart (all 4 types)
+  const connectionChart = analyzeConnectionChart(chartA, chartB);
+
   // Summary
   const summary = generateSummary(typeInteraction, profileHarmony, electromagneticPairs, sharedGates, sharedChannels);
 
@@ -465,13 +617,18 @@ export function compareHumanDesign(chartA, chartB) {
     sharedChannels,
     centerDynamics,
     bridging,
+    connectionChart,
     summary,
 
     // Quick stats
     stats: {
       electromagneticCount: electromagneticPairs.length,
+      companionshipCount: connectionChart.summary.companionship,
+      compromiseCount: connectionChart.summary.compromise,
+      dominanceCount: connectionChart.summary.dominance,
       sharedGatesCount: sharedGates.length,
       sharedChannelsCount: sharedChannels.length,
+      compositeType: connectionChart.compositeType,
       conditioningCenters: centerDynamics.filter(d =>
         d.dynamic === 'A Conditions B' || d.dynamic === 'B Conditions A'
       ).length

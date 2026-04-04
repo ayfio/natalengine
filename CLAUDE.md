@@ -23,7 +23,7 @@ npm run mcp          # Start MCP server directly
 
 ```
 src/
-├── index.js              # Main exports (calculateAstrology, calculateVedic, calculateHumanDesign, calculateGeneKeys, calculateAstroCartography)
+├── index.js              # Main exports (calculateAstrology, calculateVedic, calculateHumanDesign, calculateGeneKeys, calculateAstroCartography, calculateHDTransits, analyzePenta)
 ├── main.js               # Browser UI entry point
 ├── styles.css            # UI styles with dark mode support
 ├── geocode.js            # Location autocomplete & timezone detection
@@ -38,7 +38,11 @@ src/
 │   ├── bodygraph.js          # SVG Human Design bodygraph renderer
 │   ├── genekeys-chart.js     # SVG Gene Keys hologenetic profile renderer
 │   └── astrocartography-map.js # SVG world map with planetary lines
-├── data/                 # Static data files (zodiac signs, gates, channels, etc.)
+├── data/                 # Static data files
+│   ├── gate-descriptions.js     # Descriptions for all 64 HD gates
+│   ├── channel-descriptions.js  # Descriptions for all 36 HD channels
+│   ├── bodygraph-svg-data.js    # Gate SVG paths + center shapes
+│   └── incarnation-crosses.js   # 192 cross definitions
 ├── lib/                  # Utility functions
 └── mcp/
     └── index.js          # MCP server for Claude/AI integration
@@ -62,6 +66,25 @@ src/
 - Calculates both Personality (birth) and Design (88° before) positions
 - Determines: Type, Strategy, Authority, Profile, Centers, Gates, Channels
 - Gate calculation from planetary positions mapped to I Ching hexagrams
+- **Circuit analysis**: All 36 channels tagged with circuit (Individual/Tribal/Collective/Integration)
+- **Variable / Four Arrows**: Determination, Environment, Perspective, Motivation with Color and Tone
+- **Open vs Undefined centers**: Distinguished by gate activation (undefined = has gates, open = no gates)
+- **Not-Self themes**: Each center has not-self question, theme, and meaning for defined/undefined/open
+- **Definition type**: Accurate graph-based connectivity analysis (Single/Split/Triple/Quadruple)
+
+### HD Transits (`src/calculators/hd-transits.js`)
+- Calculates current planetary gate activations overlaid on natal chart
+- Finds hanging gate completions from transits (highest significance)
+- Identifies temporarily defined centers
+- Sun and Moon transit highlights
+
+### Penta / Team Analysis (`src/calculators/penta.js`)
+- Group dynamics for 2-9 people (optimal Penta: 3-5)
+- Group type and career type from combined definition
+- Role coverage analysis (9 center-based roles)
+- Group electromagnetic connections between members
+- Circuit balance and career type distribution
+- Team composition recommendations
 
 ### Gene Keys (`src/calculators/genekeys.js`)
 - Derives from Human Design gate data
@@ -130,7 +153,7 @@ The project includes an MCP server for AI integration:
 }
 ```
 
-Tools: `calculate_natal_chart`, `calculate_astrology`, `calculate_vedic`, `calculate_human_design`, `calculate_gene_keys`, `get_planetary_positions`, `calculate_astro_cartography`, `get_location_astro_report`
+Tools: `calculate_natal_chart`, `calculate_astrology`, `calculate_vedic`, `calculate_human_design`, `calculate_gene_keys`, `get_planetary_positions`, `calculate_astro_cartography`, `get_location_astro_report`, `calculate_hd_transits`, `analyze_team`
 
 ## Development Notes
 

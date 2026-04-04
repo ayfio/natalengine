@@ -19,15 +19,87 @@ import { getIncarnationCross } from '../data/incarnation-crosses.js';
 
 // The 9 Centers in Human Design
 const CENTERS = {
-  head: { name: 'Head', theme: 'Inspiration', biological: 'Pineal gland', pressure: 'Mental pressure to answer questions' },
-  ajna: { name: 'Ajna', theme: 'Conceptualization', biological: 'Pituitary', pressure: 'Mental awareness and processing' },
-  throat: { name: 'Throat', theme: 'Manifestation', biological: 'Thyroid', pressure: 'Communication and action' },
-  g: { name: 'G Center', theme: 'Identity', biological: 'Liver/Blood', pressure: 'Love, direction, identity' },
-  heart: { name: 'Heart/Ego', theme: 'Willpower', biological: 'Heart/Stomach', pressure: 'Material world, ego, willpower' },
-  sacral: { name: 'Sacral', theme: 'Life Force', biological: 'Ovaries/Testes', pressure: 'Vital energy, sexuality, work' },
-  spleen: { name: 'Spleen', theme: 'Intuition', biological: 'Spleen/Lymph', pressure: 'Survival, health, intuition' },
-  solar: { name: 'Solar Plexus', theme: 'Emotion', biological: 'Kidneys/Pancreas', pressure: 'Emotional wave, feelings' },
-  root: { name: 'Root', theme: 'Pressure', biological: 'Adrenals', pressure: 'Stress, adrenaline, drive' }
+  head: {
+    name: 'Head', theme: 'Inspiration', biological: 'Pineal gland',
+    pressure: 'Mental pressure to answer questions', motor: false,
+    notSelfTheme: 'Trying to answer everyone else\'s questions',
+    notSelfQuestion: 'Am I trying to answer questions that don\'t matter to me?',
+    definedMeaning: 'Consistent access to inspiration and mental pressure. You inspire others with your questions.',
+    undefinedMeaning: 'Amplify others\' mental pressure. Can become overwhelmed by questions that aren\'t yours.',
+    openMeaning: 'Completely open to all forms of inspiration. Deeply impressionable by others\' mental pressure.'
+  },
+  ajna: {
+    name: 'Ajna', theme: 'Conceptualization', biological: 'Pituitary',
+    pressure: 'Mental awareness and processing', motor: false,
+    notSelfTheme: 'Pretending to be certain about things',
+    notSelfQuestion: 'Am I trying to convince everyone that I am certain?',
+    definedMeaning: 'Consistent way of processing and conceptualizing. You have a reliable mental framework.',
+    undefinedMeaning: 'Flexible thinker who can see all perspectives. May feel pressure to have fixed opinions.',
+    openMeaning: 'Completely open-minded. Can process information in any way but may struggle with mental certainty.'
+  },
+  throat: {
+    name: 'Throat', theme: 'Manifestation', biological: 'Thyroid',
+    pressure: 'Communication and action', motor: false,
+    notSelfTheme: 'Trying to attract attention',
+    notSelfQuestion: 'Am I trying to attract attention or be heard?',
+    definedMeaning: 'Consistent voice and way of expressing. You can reliably communicate and manifest.',
+    undefinedMeaning: 'Flexible communicator. May feel pressure to speak or act to get noticed.',
+    openMeaning: 'Can channel any form of expression. Deeply sensitive to timing of speech and action.'
+  },
+  g: {
+    name: 'G Center', theme: 'Identity', biological: 'Liver/Blood',
+    pressure: 'Love, direction, identity', motor: false,
+    notSelfTheme: 'Searching for love and direction',
+    notSelfQuestion: 'Am I trying to find love, identity, or direction?',
+    definedMeaning: 'Fixed sense of identity and direction. You know who you are and where you\'re going.',
+    undefinedMeaning: 'Chameleon identity that adapts to environment. Can become wise about love and direction.',
+    openMeaning: 'Completely open to all forms of identity. Place and people strongly determine your experience.'
+  },
+  heart: {
+    name: 'Heart/Ego', theme: 'Willpower', biological: 'Heart/Stomach',
+    pressure: 'Material world, ego, willpower', motor: true,
+    notSelfTheme: 'Trying to prove your worth',
+    notSelfQuestion: 'Am I trying to prove myself or make promises I can\'t keep?',
+    definedMeaning: 'Consistent willpower and self-worth. Can make and keep promises reliably.',
+    undefinedMeaning: 'Amplify others\' willpower. May over-commit trying to prove worth. Rest the heart.',
+    openMeaning: 'No fixed sense of material value. Can become wise about worth but must avoid proving anything.'
+  },
+  sacral: {
+    name: 'Sacral', theme: 'Life Force', biological: 'Ovaries/Testes',
+    pressure: 'Vital energy, sexuality, work', motor: true,
+    notSelfTheme: 'Not knowing when enough is enough',
+    notSelfQuestion: 'Do I know when enough is enough?',
+    definedMeaning: 'Sustainable life force energy. Can work consistently when responding to what you love.',
+    undefinedMeaning: 'Amplify others\' sacral energy. May overwork. Need to know when to stop and rest.',
+    openMeaning: 'No fixed life force. Deeply sensitive to others\' energy. Must protect against burnout.'
+  },
+  spleen: {
+    name: 'Spleen', theme: 'Intuition', biological: 'Spleen/Lymph',
+    pressure: 'Survival, health, intuition', motor: false,
+    notSelfTheme: 'Holding on to what isn\'t healthy',
+    notSelfQuestion: 'Am I holding on to things, people, or habits that aren\'t good for me?',
+    definedMeaning: 'Consistent intuitive awareness and immune system. You have reliable instincts.',
+    undefinedMeaning: 'Amplify others\' fears and intuitions. May hold on to unhealthy situations out of fear.',
+    openMeaning: 'No fixed immune or intuitive pattern. Can become deeply wise about health and survival.'
+  },
+  solar: {
+    name: 'Solar Plexus', theme: 'Emotion', biological: 'Kidneys/Pancreas',
+    pressure: 'Emotional wave, feelings', motor: true,
+    notSelfTheme: 'Avoiding truth and confrontation to keep the peace',
+    notSelfQuestion: 'Am I avoiding truth and confrontation?',
+    definedMeaning: 'Consistent emotional wave. You experience life through feelings that move in cycles.',
+    undefinedMeaning: 'Amplify others\' emotions. May avoid conflict. Can become wise about emotional truth.',
+    openMeaning: 'No fixed emotional pattern. Deeply empathic. Must learn emotions felt are often not your own.'
+  },
+  root: {
+    name: 'Root', theme: 'Pressure', biological: 'Adrenals',
+    pressure: 'Stress, adrenaline, drive', motor: true,
+    notSelfTheme: 'Being in a hurry to be free of pressure',
+    notSelfQuestion: 'Am I in a hurry to get things done just to relieve pressure?',
+    definedMeaning: 'Consistent adrenal pressure. You handle stress in your own reliable way.',
+    undefinedMeaning: 'Amplify others\' pressure. May rush to complete tasks. Learn to manage pressure wisely.',
+    openMeaning: 'No fixed relationship to pressure. Can be deeply sensitive to stress from all sources.'
+  }
 };
 
 // The 64 Gates mapped to their positions on the zodiac wheel
@@ -100,44 +172,52 @@ const GATES = {
   64: { center: 'head', name: 'Confusion', iching: 'Before Completion', theme: 'Confusion' }
 };
 
-// The 36 Channels (connecting two gates)
+// Circuit Groups
+const CIRCUIT_GROUPS = {
+  individual: { name: 'Individual', theme: 'Empowerment, mutation, uniqueness', keywords: 'Knowing, uniqueness, melancholy' },
+  tribal: { name: 'Tribal', theme: 'Support, community, resources', keywords: 'Loyalty, support, bargains' },
+  collective: { name: 'Collective', theme: 'Sharing, humanity, evolution', keywords: 'Sharing, logic, experience' },
+  integration: { name: 'Integration', theme: 'Self-empowerment, survival', keywords: 'Self, survival, attainment' }
+};
+
+// The 36 Channels (connecting two gates) with circuit membership
 const CHANNELS = [
-  { gates: [1, 8], name: 'Inspiration', centers: ['g', 'throat'], theme: 'Creative role model' },
-  { gates: [2, 14], name: 'The Beat', centers: ['g', 'sacral'], theme: 'Keeper of keys' },
-  { gates: [3, 60], name: 'Mutation', centers: ['sacral', 'root'], theme: 'Energy for mutation' },
-  { gates: [4, 63], name: 'Logic', centers: ['ajna', 'head'], theme: 'Mental ease in doubt' },
-  { gates: [5, 15], name: 'Rhythm', centers: ['sacral', 'g'], theme: 'Being in flow' },
-  { gates: [6, 59], name: 'Intimacy', centers: ['solar', 'sacral'], theme: 'Focused on reproduction' },
-  { gates: [7, 31], name: 'Alpha', centers: ['g', 'throat'], theme: 'Leadership' },
-  { gates: [9, 52], name: 'Concentration', centers: ['sacral', 'root'], theme: 'Focused determination' },
-  { gates: [10, 20], name: 'Awakening', centers: ['g', 'throat'], theme: 'Commitment to self' },
-  { gates: [10, 34], name: 'Exploration', centers: ['g', 'sacral'], theme: 'Following convictions' },
-  { gates: [10, 57], name: 'Perfected Form', centers: ['g', 'spleen'], theme: 'Survival' },
-  { gates: [11, 56], name: 'Curiosity', centers: ['ajna', 'throat'], theme: 'A searcher' },
-  { gates: [12, 22], name: 'Openness', centers: ['throat', 'solar'], theme: 'Social being' },
-  { gates: [13, 33], name: 'The Prodigal', centers: ['g', 'throat'], theme: 'A witness' },
-  { gates: [16, 48], name: 'The Wavelength', centers: ['throat', 'spleen'], theme: 'Talent' },
-  { gates: [17, 62], name: 'Acceptance', centers: ['ajna', 'throat'], theme: 'An organizational being' },
-  { gates: [18, 58], name: 'Judgement', centers: ['spleen', 'root'], theme: 'Insatiability' },
-  { gates: [19, 49], name: 'Synthesis', centers: ['root', 'solar'], theme: 'Sensitivity' },
-  { gates: [20, 34], name: 'Charisma', centers: ['throat', 'sacral'], theme: 'Busy-ness' },
-  { gates: [20, 57], name: 'The Brainwave', centers: ['throat', 'spleen'], theme: 'Penetrating awareness' },
-  { gates: [21, 45], name: 'Money', centers: ['heart', 'throat'], theme: 'A materialist' },
-  { gates: [23, 43], name: 'Structuring', centers: ['throat', 'ajna'], theme: 'Individuality' },
-  { gates: [24, 61], name: 'Awareness', centers: ['ajna', 'head'], theme: 'A thinker' },
-  { gates: [25, 51], name: 'Initiation', centers: ['g', 'heart'], theme: 'Needing to be first' },
-  { gates: [26, 44], name: 'Surrender', centers: ['heart', 'spleen'], theme: 'A transmitter' },
-  { gates: [27, 50], name: 'Preservation', centers: ['sacral', 'spleen'], theme: 'Custodianship' },
-  { gates: [28, 38], name: 'Struggle', centers: ['spleen', 'root'], theme: 'Stubbornness' },
-  { gates: [29, 46], name: 'Discovery', centers: ['sacral', 'g'], theme: 'Succeeding where others fail' },
-  { gates: [30, 41], name: 'Recognition', centers: ['solar', 'root'], theme: 'Focused energy' },
-  { gates: [32, 54], name: 'Transformation', centers: ['spleen', 'root'], theme: 'Being driven' },
-  { gates: [34, 57], name: 'Power', centers: ['sacral', 'spleen'], theme: 'An archetype' },
-  { gates: [35, 36], name: 'Transitoriness', centers: ['throat', 'solar'], theme: 'A jack of all trades' },
-  { gates: [37, 40], name: 'Community', centers: ['solar', 'heart'], theme: 'Part of a bargain' },
-  { gates: [39, 55], name: 'Emoting', centers: ['root', 'solar'], theme: 'Moodiness' },
-  { gates: [42, 53], name: 'Maturation', centers: ['sacral', 'root'], theme: 'Balanced development' },
-  { gates: [47, 64], name: 'Abstraction', centers: ['ajna', 'head'], theme: 'Mental activity/clarity' }
+  { gates: [1, 8], name: 'Inspiration', centers: ['g', 'throat'], theme: 'Creative role model', circuit: 'individual', subcircuit: 'knowing' },
+  { gates: [2, 14], name: 'The Beat', centers: ['g', 'sacral'], theme: 'Keeper of keys', circuit: 'individual', subcircuit: 'knowing' },
+  { gates: [3, 60], name: 'Mutation', centers: ['sacral', 'root'], theme: 'Energy for mutation', circuit: 'individual', subcircuit: 'knowing' },
+  { gates: [4, 63], name: 'Logic', centers: ['ajna', 'head'], theme: 'Mental ease in doubt', circuit: 'collective', subcircuit: 'logic' },
+  { gates: [5, 15], name: 'Rhythm', centers: ['sacral', 'g'], theme: 'Being in flow', circuit: 'collective', subcircuit: 'logic' },
+  { gates: [6, 59], name: 'Intimacy', centers: ['solar', 'sacral'], theme: 'Focused on reproduction', circuit: 'tribal', subcircuit: 'defense' },
+  { gates: [7, 31], name: 'Alpha', centers: ['g', 'throat'], theme: 'Leadership', circuit: 'collective', subcircuit: 'logic' },
+  { gates: [9, 52], name: 'Concentration', centers: ['sacral', 'root'], theme: 'Focused determination', circuit: 'collective', subcircuit: 'logic' },
+  { gates: [10, 20], name: 'Awakening', centers: ['g', 'throat'], theme: 'Commitment to self', circuit: 'integration', subcircuit: 'integration' },
+  { gates: [10, 34], name: 'Exploration', centers: ['g', 'sacral'], theme: 'Following convictions', circuit: 'integration', subcircuit: 'integration' },
+  { gates: [10, 57], name: 'Perfected Form', centers: ['g', 'spleen'], theme: 'Survival', circuit: 'integration', subcircuit: 'integration' },
+  { gates: [11, 56], name: 'Curiosity', centers: ['ajna', 'throat'], theme: 'A searcher', circuit: 'collective', subcircuit: 'sensing' },
+  { gates: [12, 22], name: 'Openness', centers: ['throat', 'solar'], theme: 'Social being', circuit: 'individual', subcircuit: 'centering' },
+  { gates: [13, 33], name: 'The Prodigal', centers: ['g', 'throat'], theme: 'A witness', circuit: 'collective', subcircuit: 'sensing' },
+  { gates: [16, 48], name: 'The Wavelength', centers: ['throat', 'spleen'], theme: 'Talent', circuit: 'collective', subcircuit: 'logic' },
+  { gates: [17, 62], name: 'Acceptance', centers: ['ajna', 'throat'], theme: 'An organizational being', circuit: 'collective', subcircuit: 'logic' },
+  { gates: [18, 58], name: 'Judgement', centers: ['spleen', 'root'], theme: 'Insatiability', circuit: 'collective', subcircuit: 'logic' },
+  { gates: [19, 49], name: 'Synthesis', centers: ['root', 'solar'], theme: 'Sensitivity', circuit: 'tribal', subcircuit: 'defense' },
+  { gates: [20, 34], name: 'Charisma', centers: ['throat', 'sacral'], theme: 'Busy-ness', circuit: 'integration', subcircuit: 'integration' },
+  { gates: [20, 57], name: 'The Brainwave', centers: ['throat', 'spleen'], theme: 'Penetrating awareness', circuit: 'integration', subcircuit: 'integration' },
+  { gates: [21, 45], name: 'Money', centers: ['heart', 'throat'], theme: 'A materialist', circuit: 'tribal', subcircuit: 'ego' },
+  { gates: [23, 43], name: 'Structuring', centers: ['throat', 'ajna'], theme: 'Individuality', circuit: 'individual', subcircuit: 'knowing' },
+  { gates: [24, 61], name: 'Awareness', centers: ['ajna', 'head'], theme: 'A thinker', circuit: 'individual', subcircuit: 'knowing' },
+  { gates: [25, 51], name: 'Initiation', centers: ['g', 'heart'], theme: 'Needing to be first', circuit: 'individual', subcircuit: 'centering' },
+  { gates: [26, 44], name: 'Surrender', centers: ['heart', 'spleen'], theme: 'A transmitter', circuit: 'tribal', subcircuit: 'ego' },
+  { gates: [27, 50], name: 'Preservation', centers: ['sacral', 'spleen'], theme: 'Custodianship', circuit: 'tribal', subcircuit: 'defense' },
+  { gates: [28, 38], name: 'Struggle', centers: ['spleen', 'root'], theme: 'Stubbornness', circuit: 'individual', subcircuit: 'knowing' },
+  { gates: [29, 46], name: 'Discovery', centers: ['sacral', 'g'], theme: 'Succeeding where others fail', circuit: 'collective', subcircuit: 'sensing' },
+  { gates: [30, 41], name: 'Recognition', centers: ['solar', 'root'], theme: 'Focused energy', circuit: 'collective', subcircuit: 'sensing' },
+  { gates: [32, 54], name: 'Transformation', centers: ['spleen', 'root'], theme: 'Being driven', circuit: 'tribal', subcircuit: 'ego' },
+  { gates: [34, 57], name: 'Power', centers: ['sacral', 'spleen'], theme: 'An archetype', circuit: 'integration', subcircuit: 'integration' },
+  { gates: [35, 36], name: 'Transitoriness', centers: ['throat', 'solar'], theme: 'A jack of all trades', circuit: 'collective', subcircuit: 'sensing' },
+  { gates: [37, 40], name: 'Community', centers: ['solar', 'heart'], theme: 'Part of a bargain', circuit: 'tribal', subcircuit: 'ego' },
+  { gates: [39, 55], name: 'Emoting', centers: ['root', 'solar'], theme: 'Moodiness', circuit: 'individual', subcircuit: 'knowing' },
+  { gates: [42, 53], name: 'Maturation', centers: ['sacral', 'root'], theme: 'Balanced development', circuit: 'collective', subcircuit: 'sensing' },
+  { gates: [47, 64], name: 'Abstraction', centers: ['ajna', 'head'], theme: 'Mental activity/clarity', circuit: 'collective', subcircuit: 'sensing' }
 ];
 
 // The 5 Human Design Types
@@ -536,14 +616,45 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
     ]
   };
 
-  // Determine definition type based on channel count and center connectivity
-  const channelCount = activeChannels.length;
-  let definition = 'None';
-  if (channelCount === 0) definition = 'None';
-  else if (channelCount === 1) definition = 'Single Definition';
-  else if (channelCount <= 3) definition = 'Split Definition';
-  else if (channelCount <= 5) definition = 'Triple Split';
-  else definition = 'Quadruple Split';
+  // Determine definition type based on center connectivity groups
+  const definitionType = determineDefinitionType(activeChannels, definedCenters);
+
+  // Classify undefined centers as "undefined" (has gates) vs "open" (no gates)
+  const undefinedCenterDetails = Object.keys(CENTERS)
+    .filter(c => !definedCenters.has(c))
+    .map(c => {
+      // Check if any gates in this center are activated
+      const centerGates = Object.entries(GATES)
+        .filter(([, g]) => g.center === c)
+        .map(([num]) => parseInt(num));
+      const hasGates = centerGates.some(g => activeGates.has(g));
+      return {
+        ...CENTERS[c],
+        key: c,
+        status: hasGates ? 'undefined' : 'open',
+        activatedGates: centerGates.filter(g => activeGates.has(g))
+      };
+    });
+
+  // Circuit analysis: count channels per circuit
+  const circuitAnalysis = {
+    individual: { channels: 0, names: [] },
+    tribal: { channels: 0, names: [] },
+    collective: { channels: 0, names: [] },
+    integration: { channels: 0, names: [] }
+  };
+  activeChannels.forEach(ch => {
+    if (ch.circuit && circuitAnalysis[ch.circuit]) {
+      circuitAnalysis[ch.circuit].channels++;
+      circuitAnalysis[ch.circuit].names.push(ch.name);
+    }
+  });
+  const dominantCircuit = Object.entries(circuitAnalysis)
+    .filter(([, v]) => v.channels > 0)
+    .sort((a, b) => b[1].channels - a[1].channels)[0];
+
+  // Calculate Variable (Four Arrows) from Color
+  const variable = calculateVariable(personalityPos, designPos);
 
   return {
     type: TYPES[type],
@@ -552,13 +663,16 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
       numbers: profile,
       ...profileInfo
     },
-    definition,
+    definition: definitionType,
     incarnationCross,
     centers: {
-      defined: Array.from(definedCenters).map(c => CENTERS[c]),
-      undefined: Object.keys(CENTERS).filter(c => !definedCenters.has(c)).map(c => CENTERS[c]),
+      defined: Array.from(definedCenters).map(c => ({ ...CENTERS[c], key: c })),
+      undefined: undefinedCenterDetails.filter(c => c.status === 'undefined'),
+      open: undefinedCenterDetails.filter(c => c.status === 'open'),
       definedNames: Array.from(definedCenters),
-      undefinedNames: Object.keys(CENTERS).filter(c => !definedCenters.has(c))
+      undefinedNames: undefinedCenterDetails.filter(c => c.status === 'undefined').map(c => c.key),
+      openNames: undefinedCenterDetails.filter(c => c.status === 'open').map(c => c.key),
+      allUndefinedNames: Object.keys(CENTERS).filter(c => !definedCenters.has(c))
     },
     gates: {
       personality: personalityGates,
@@ -566,6 +680,15 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
       all: Array.from(activeGates)
     },
     channels: activeChannels,
+    circuitAnalysis: {
+      ...circuitAnalysis,
+      dominant: dominantCircuit ? {
+        name: dominantCircuit[0],
+        ...CIRCUIT_GROUPS[dominantCircuit[0]],
+        channelCount: dominantCircuit[1].channels
+      } : null
+    },
+    variable,
     // Raw planetary positions for advanced users
     positions: {
       personality: {
@@ -604,6 +727,192 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
     useEphemeris: true,
     summary: `${TYPES[type].name} with ${AUTHORITIES[authority].name}, ${profileInfo.name} Profile`,
     note: 'Calculated using Meeus algorithms (all 13 planetary positions)'
+  };
+}
+
+/**
+ * Determine definition type using graph connectivity analysis
+ * Counts the number of connected components among defined centers
+ */
+function determineDefinitionType(channels, definedCenters) {
+  if (definedCenters.size === 0) return 'No Definition';
+  if (channels.length === 0) return 'No Definition';
+
+  // Build adjacency graph
+  const adj = new Map();
+  for (const c of definedCenters) adj.set(c, new Set());
+  channels.forEach(ch => {
+    const [c1, c2] = ch.centers;
+    if (adj.has(c1) && adj.has(c2)) {
+      adj.get(c1).add(c2);
+      adj.get(c2).add(c1);
+    }
+  });
+
+  // Count connected components via BFS
+  const visited = new Set();
+  let components = 0;
+  for (const center of definedCenters) {
+    if (visited.has(center)) continue;
+    components++;
+    const queue = [center];
+    visited.add(center);
+    while (queue.length > 0) {
+      const current = queue.shift();
+      for (const neighbor of (adj.get(current) || [])) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          queue.push(neighbor);
+        }
+      }
+    }
+  }
+
+  if (components === 1) return 'Single Definition';
+  if (components === 2) return 'Split Definition';
+  if (components === 3) return 'Triple Split Definition';
+  return 'Quadruple Split Definition';
+}
+
+// Variable / Four Arrows calculation
+// Each arrow is determined by the Color (1-6) of specific planetary positions
+// Color is the sub-line level: each Line spans 0.9375°, each Color spans 0.15625° (0.9375/6)
+const DETERMINATION_TYPES = {
+  1: { name: 'Appetite', description: 'Eat simple, one thing at a time. Consecutive diet.' },
+  2: { name: 'Taste', description: 'Sensitive palate. Open or closed taste preferences.' },
+  3: { name: 'Thirst', description: 'Temperature sensitivity. Hot or cold food/drink.' },
+  4: { name: 'Touch', description: 'Environment affects digestion. Calm surroundings needed.' },
+  5: { name: 'Sound', description: 'Acoustic environment matters. Sound affects metabolism.' },
+  6: { name: 'Light', description: 'Light conditions affect eating. Direct or indirect light.' }
+};
+
+const ENVIRONMENT_TYPES = {
+  1: { name: 'Caves', description: 'Enclosed, protected, selective spaces. Privacy and shelter.' },
+  2: { name: 'Markets', description: 'Places of exchange and gathering. Commercial, busy spaces.' },
+  3: { name: 'Kitchens', description: 'Transformative spaces. Where things are heated and prepared.' },
+  4: { name: 'Mountains', description: 'Elevated spaces. Higher altitude, views, expansive.' },
+  5: { name: 'Valleys', description: 'Acoustically rich environments. Sounds and resonance.' },
+  6: { name: 'Shores', description: 'Transitional spaces. Edges, boundaries, thresholds.' }
+};
+
+const PERSPECTIVE_TYPES = {
+  1: { name: 'Survival', description: 'Awareness focused on security and self-preservation.' },
+  2: { name: 'Possibility', description: 'Open, optimistic view. Sees potential everywhere.' },
+  3: { name: 'Power', description: 'Focused on influence and impact. Sees dynamics of control.' },
+  4: { name: 'Wanting', description: 'Driven by desire. Sees what is needed or missing.' },
+  5: { name: 'Probability', description: 'Analytical, practical view. Calculates odds and outcomes.' },
+  6: { name: 'Personal', description: 'Introspective, self-reflective view. Deeply personal lens.' }
+};
+
+const MOTIVATION_TYPES = {
+  1: { name: 'Fear', description: 'Motivated to understand the unknown. Natural researcher and learner.' },
+  2: { name: 'Hope', description: 'Motivated by patience and trust. Waits and observes before acting.' },
+  3: { name: 'Desire', description: 'Motivated to move and organize. Initiates with purpose.' },
+  4: { name: 'Need', description: 'Motivated by service. Identifies what must be done for the collective.' },
+  5: { name: 'Guilt', description: 'Motivated by deep responsibility. Driven to fix and manage.' },
+  6: { name: 'Innocence', description: 'Motivated by non-doing. Shows up without agenda or expectation.' }
+};
+
+const COGNITION_TYPES = {
+  1: { name: 'Smell', description: 'Information processed through scent and atmospheric frequencies.' },
+  2: { name: 'Taste', description: 'Information processed through the mouth and palate.' },
+  3: { name: 'Outer Vision', description: 'Aesthetically oriented. Processes through what is seen externally.' },
+  4: { name: 'Inner Vision', description: 'Visualization and imagination. Sees beyond the physical.' },
+  5: { name: 'Feeling', description: 'Sensing vibes and subtle energies. Processes through touch and feel.' },
+  6: { name: 'Touch', description: 'Information through hands and physical contact. Tactile intelligence.' }
+};
+
+/**
+ * Get the Color (1-6) from a zodiac longitude
+ * Each gate = 5.625°, each line = 0.9375°, each color = 0.15625°
+ */
+function longitudeToColor(longitude) {
+  const normalizedLong = ((longitude % 360) + 360) % 360;
+  const adjustedLong = ((normalizedLong - GATE_WHEEL_OFFSET + 360) % 360);
+  const withinGate = adjustedLong % 5.625;
+  const withinLine = withinGate % 0.9375;
+  const color = Math.floor(withinLine / 0.15625) + 1;
+  return Math.min(color, 6);
+}
+
+/**
+ * Get the Tone (1-6) from a zodiac longitude
+ * Each color = 0.15625°, each tone = 0.026041667°
+ */
+function longitudeToTone(longitude) {
+  const normalizedLong = ((longitude % 360) + 360) % 360;
+  const adjustedLong = ((normalizedLong - GATE_WHEEL_OFFSET + 360) % 360);
+  const withinGate = adjustedLong % 5.625;
+  const withinLine = withinGate % 0.9375;
+  const withinColor = withinLine % 0.15625;
+  const tone = Math.floor(withinColor / 0.026041667) + 1;
+  return Math.min(tone, 6);
+}
+
+/**
+ * Calculate Variable (Four Arrows)
+ * - Top Left (Determination): Design Sun Color → Left (1-3) or Right (4-6)
+ * - Bottom Left (Environment): Design Node Color → Left (1-3) or Right (4-6)
+ * - Top Right (Perspective): Personality Sun Color → Left (1-3) or Right (4-6)
+ * - Bottom Right (Motivation): Personality Node Color → Left (1-3) or Right (4-6)
+ */
+function calculateVariable(personalityPos, designPos) {
+  const personalitySunLong = personalityPos.sun.longitude;
+  const designSunLong = designPos.sun.longitude;
+  const personalityNodeLong = personalityPos.northNode.longitude;
+  const designNodeLong = designPos.northNode.longitude;
+
+  const determinationColor = longitudeToColor(designSunLong);
+  const environmentColor = longitudeToColor(designNodeLong);
+  const perspectiveColor = longitudeToColor(personalitySunLong);
+  const motivationColor = longitudeToColor(personalityNodeLong);
+
+  const determinationTone = longitudeToTone(designSunLong);
+  const environmentTone = longitudeToTone(designNodeLong);
+  const perspectiveTone = longitudeToTone(personalitySunLong);
+  const motivationTone = longitudeToTone(personalityNodeLong);
+
+  // Left (1-3) = active/strategic/focused; Right (4-6) = passive/receptive/peripheral
+  const isLeft = (color) => color <= 3;
+
+  const arrows = {
+    determination: {
+      arrow: isLeft(determinationColor) ? 'left' : 'right',
+      color: determinationColor,
+      tone: determinationTone,
+      ...DETERMINATION_TYPES[determinationColor],
+      cognition: COGNITION_TYPES[determinationTone]
+    },
+    environment: {
+      arrow: isLeft(environmentColor) ? 'left' : 'right',
+      color: environmentColor,
+      tone: environmentTone,
+      ...ENVIRONMENT_TYPES[environmentColor]
+    },
+    perspective: {
+      arrow: isLeft(perspectiveColor) ? 'left' : 'right',
+      color: perspectiveColor,
+      tone: perspectiveTone,
+      ...PERSPECTIVE_TYPES[perspectiveColor]
+    },
+    motivation: {
+      arrow: isLeft(motivationColor) ? 'left' : 'right',
+      color: motivationColor,
+      tone: motivationTone,
+      ...MOTIVATION_TYPES[motivationColor]
+    }
+  };
+
+  // Build the four-arrow notation (e.g., "LR RL" = Left-Right Right-Left)
+  const notation = `${arrows.determination.arrow[0].toUpperCase()}${arrows.environment.arrow[0].toUpperCase()} ${arrows.perspective.arrow[0].toUpperCase()}${arrows.motivation.arrow[0].toUpperCase()}`;
+
+  return {
+    ...arrows,
+    notation,
+    digestiveType: arrows.determination.name,
+    environmentType: arrows.environment.name,
+    perspectiveType: arrows.perspective.name,
+    motivationType: arrows.motivation.name
   };
 }
 
@@ -868,5 +1177,5 @@ export function calculateGeneKeys(humanDesignResult) {
   };
 }
 
-export { GATES, CHANNELS, CENTERS, TYPES, PROFILES, AUTHORITIES };
+export { GATES, CHANNELS, CENTERS, TYPES, PROFILES, AUTHORITIES, CIRCUIT_GROUPS, LINE_NAMES, longitudeToGate, longitudeToLine, longitudeToColor, longitudeToTone };
 export default calculateHumanDesign;
