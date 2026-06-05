@@ -88,9 +88,14 @@ Returns Western natal chart data.
 }
 ```
 
-### calculateHumanDesign(birthDate, birthHour, timezone)
+### calculateHumanDesign(birthDate, birthHour, timezone, options?)
 
-Returns Human Design chart data.
+Returns Human Design chart data. `options.nodeType` selects `'true'` (default,
+the dominant HD convention) or `'mean'` lunar nodes.
+
+Every activation includes the full substructure — `gate`, `line`, `color`,
+`tone`, `base`, and the raw `longitude` — so apps can build Variable/PHS
+features or re-derive anything.
 
 **Returns:**
 
@@ -112,10 +117,19 @@ Returns Human Design chart data.
     design: { sun, earth, moon, northNode, southNode, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto },
     all: [1, 2, 3, ...]
   },
-  channels: [{ gates, name, centers }],
+  channels: [{ gates, name, centers, circuit, subcircuit }],
+  circuitAnalysis: { individual, tribal, collective, integration, dominant },
+  variable: {
+    determination: { arrow, color, tone, name, description, cognition },
+    environment:   { arrow, color, tone, name, description },
+    motivation:    { arrow, color, tone, name, description },
+    perspective:   { arrow, color, tone, name, description },
+    notation: "RR LR"  // [Determination, Environment | Motivation, Perspective]
+  },
+  meta: { birthDate, birthHour, timezone, nodeType, ephemeris, designSolarArc },
   positions: {
-    personality: { date, sun, earth, moon, ... }, // Raw planetary data at birth
-    design: { date, sun, earth, moon, ... }       // Raw planetary data 88° before
+    personality: { date, sun, earth, moon, ... },     // Raw planetary data at birth
+    design: { date, dateTime, sun, earth, moon, ... } // Raw data at exactly 88° solar arc before
   }
 }
 ```
@@ -151,6 +165,34 @@ Returns Gene Keys profile from Human Design data.
   primeGifts: [...],   // The 4 gifts from Activation Sequence
   summary: "Life's Work: 64.3 (Imagination), ..."
 }
+```
+
+### Timezone & geocoding (accurate birth data)
+
+The largest real-world error source in birth charts is timezone handling —
+historical DST, wartime time, half-hour zones. Never estimate offsets from
+longitude. NatalEngine ships the accurate path:
+
+```javascript
+import { searchPlaces, resolveUtcOffset, formatUtcOffset } from 'natalengine';
+
+const places = await searchPlaces('Denver');     // Open-Meteo geocoding, no key
+// → [{ name, label, latitude, longitude, timezone: 'America/Denver', ... }]
+
+const offset = resolveUtcOffset('1944-06-15', '12:00', 'Europe/London');
+// → 2 (British Double Summer Time — full IANA history via the Intl API)
+
+const hd = calculateHumanDesign('1944-06-15', 12, offset);
+```
+
+### Human Design extras
+
+```javascript
+import { calculateHDTransits, compareHumanDesign, analyzePenta } from 'natalengine';
+
+const transits = calculateHDTransits(hd, '2026-06-04'); // transit overlay + channel completions
+const connection = compareHumanDesign(hdA, hdB);        // electromagnetic/dominance/compromise/companionship
+const team = analyzePenta([hdA, hdB, hdC], names);      // group/Penta analysis
 ```
 
 ## MCP Server (AI Integration)
@@ -197,16 +239,14 @@ Then ask Claude:
 | System | Data |
 |--------|------|
 | **Astrology** | Sun, Moon, Rising, all planets, nodes, midheaven, aspects, elements, modalities |
-| **Human Design** | Type, Strategy, Authority, Profile, Centers, Gates (13 planets), Channels, Incarnation Cross |
+| **Human Design** | Type, Strategy, Authority, Profile, Definition, Centers, Gates (13 planets × 2 with line/color/tone/base), Channels with circuitry, Incarnation Cross (192 named), Variable (4 arrows / PHS), Transits, Connection charts, Penta |
 | **Gene Keys** | Activation Sequence, Venus Sequence, Pearl Sequence with shadow/gift/siddhi |
 
 ## What's NOT Included
 
-- Interpretations or readings
-- Transit calculations
-- Synastry/compatibility (coming soon)
+- Long-form interpretations or readings (keynote-level descriptions are included)
 - Progressed charts
-- Solar returns
+- Solar/Saturn returns (planned)
 
 ## License
 

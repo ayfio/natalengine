@@ -194,12 +194,12 @@ const CHANNELS = [
   { gates: [10, 34], name: 'Exploration', centers: ['g', 'sacral'], theme: 'Following convictions', circuit: 'integration', subcircuit: 'integration' },
   { gates: [10, 57], name: 'Perfected Form', centers: ['g', 'spleen'], theme: 'Survival', circuit: 'integration', subcircuit: 'integration' },
   { gates: [11, 56], name: 'Curiosity', centers: ['ajna', 'throat'], theme: 'A searcher', circuit: 'collective', subcircuit: 'sensing' },
-  { gates: [12, 22], name: 'Openness', centers: ['throat', 'solar'], theme: 'Social being', circuit: 'individual', subcircuit: 'centering' },
+  { gates: [12, 22], name: 'Openness', centers: ['throat', 'solar'], theme: 'Social being', circuit: 'individual', subcircuit: 'knowing' },
   { gates: [13, 33], name: 'The Prodigal', centers: ['g', 'throat'], theme: 'A witness', circuit: 'collective', subcircuit: 'sensing' },
   { gates: [16, 48], name: 'The Wavelength', centers: ['throat', 'spleen'], theme: 'Talent', circuit: 'collective', subcircuit: 'logic' },
   { gates: [17, 62], name: 'Acceptance', centers: ['ajna', 'throat'], theme: 'An organizational being', circuit: 'collective', subcircuit: 'logic' },
   { gates: [18, 58], name: 'Judgement', centers: ['spleen', 'root'], theme: 'Insatiability', circuit: 'collective', subcircuit: 'logic' },
-  { gates: [19, 49], name: 'Synthesis', centers: ['root', 'solar'], theme: 'Sensitivity', circuit: 'tribal', subcircuit: 'defense' },
+  { gates: [19, 49], name: 'Synthesis', centers: ['root', 'solar'], theme: 'Sensitivity', circuit: 'tribal', subcircuit: 'ego' },
   { gates: [20, 34], name: 'Charisma', centers: ['throat', 'sacral'], theme: 'Busy-ness', circuit: 'integration', subcircuit: 'integration' },
   { gates: [20, 57], name: 'The Brainwave', centers: ['throat', 'spleen'], theme: 'Penetrating awareness', circuit: 'integration', subcircuit: 'integration' },
   { gates: [21, 45], name: 'Money', centers: ['heart', 'throat'], theme: 'A materialist', circuit: 'tribal', subcircuit: 'ego' },
@@ -368,20 +368,9 @@ function longitudeToLine(longitude) {
 }
 
 /**
- * Approximate planetary positions for a date
- * Fallback when Swiss Ephemeris is unavailable
- */
-function approximateSunPosition(date) {
-  const d = new Date(date);
-  // March equinox (0° Aries) is around March 20
-  const marchEquinox = new Date(d.getFullYear(), 2, 20);
-  const daysSinceEquinox = (d - marchEquinox) / (24 * 60 * 60 * 1000);
-  // Sun moves approximately 1 degree per day
-  return (daysSinceEquinox + 360) % 360;
-}
-
-/**
- * Convert planet positions to gate activations
+ * Convert planet positions to gate activations.
+ * Includes the full substructure (line/color/tone/base) so consumers can
+ * build Variable/PHS features and re-derive anything from the longitude.
  */
 function planetToGateActivation(planet, longitude) {
   if (!longitude && longitude !== 0) return null;
@@ -391,19 +380,31 @@ function planetToGateActivation(planet, longitude) {
     planet,
     gate,
     line,
+    color: longitudeToColor(longitude),
+    tone: longitudeToTone(longitude),
+    base: longitudeToBase(longitude),
     longitude,
     ...GATES[gate]
   };
 }
 
 /**
- * Calculate Human Design chart using Meeus astronomical algorithms
+ * Calculate Human Design chart.
+ *
+ * Planetary positions via astronomy-engine (VSOP87, ±1 arcminute); design
+ * moment solved for exactly 88° of solar arc before birth.
+ *
+ * @param {string} birthDate - YYYY-MM-DD (local)
+ * @param {number} birthHour - decimal local hour (14.5 = 2:30 PM)
+ * @param {number} timezone - UTC offset in hours at the birth moment
+ * @param {object} [options]
+ * @param {('true'|'mean')} [options.nodeType='true'] - lunar node flavor
  */
-export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
+export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0, options = {}) {
   const { year, month, day } = parseDateComponents(birthDate);
 
   // Calculate personality positions (birth moment)
-  const personalityPos = calculateBirthPositions(year, month, day, birthHour, timezone);
+  const personalityPos = calculateBirthPositions(year, month, day, birthHour, timezone, null, null, options);
 
   // Calculate design positions (88 degrees of Sun before birth)
   // The Sun doesn't move exactly 1° per day - it varies from ~0.9856°/day on average
@@ -423,7 +424,7 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
   // Phase 1: Find the approximate day (within 1 day accuracy)
   let designPos = null;
   for (let iteration = 0; iteration < 20; iteration++) {
-    designPos = calculateBirthPositions(designYear, designMonth, designDay, 12, timezone);
+    designPos = calculateBirthPositions(designYear, designMonth, designDay, 12, timezone, null, null, options);
     const currentSunLong = designPos.sun.longitude;
 
     let diff = currentSunLong - designSunTarget;
@@ -478,7 +479,7 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
     const searchDay = searchDate.getDate();
     const searchHour = searchDate.getHours() + searchDate.getMinutes() / 60;
 
-    designPos = calculateBirthPositions(searchYear, searchMonth, searchDay, searchHour, timezone);
+    designPos = calculateBirthPositions(searchYear, searchMonth, searchDay, searchHour, timezone, null, null, options);
     const currentSunLong = designPos.sun.longitude;
 
     let diff = currentSunLong - designSunTarget;
@@ -519,7 +520,7 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
   }
 
   // Final calculation at the exact Design moment
-  designPos = calculateBirthPositions(designYear, designMonth, designDay, designHour, timezone);
+  designPos = calculateBirthPositions(designYear, designMonth, designDay, designHour, timezone, null, null, options);
 
   // Build gate activations for all planets
   const personalityGates = {
@@ -603,11 +604,12 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
   const designEarthGate = designGates.earth?.gate;
 
   // Get proper Incarnation Cross name based on Personality Sun and Profile
-  const crossInfo = getIncarnationCross(personalitySunGate, profile);
+  const crossGates = [personalitySunGate, personalityEarthGate, designSunGate, designEarthGate];
+  const crossInfo = getIncarnationCross(personalitySunGate, profile, crossGates);
 
   const incarnationCross = {
     ...crossInfo,
-    gates: [personalitySunGate, personalityEarthGate, designSunGate, designEarthGate],
+    gates: crossGates,
     gateNames: [
       GATES[personalitySunGate]?.name,
       GATES[personalityEarthGate]?.name,
@@ -689,6 +691,15 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
       } : null
     },
     variable,
+    // Reproducibility metadata — everything needed to re-derive or compare
+    meta: {
+      birthDate,
+      birthHour,
+      timezone,
+      nodeType: personalityPos.nodeType || 'true',
+      ephemeris: 'astronomy-engine (VSOP87)',
+      designSolarArc: 88
+    },
     // Raw planetary positions for advanced users
     positions: {
       personality: {
@@ -709,6 +720,8 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
       },
       design: {
         date: `${designYear}-${String(designMonth).padStart(2, '0')}-${String(designDay).padStart(2, '0')}`,
+        // Local time (birth timezone) of the exact 88°-solar-arc moment
+        dateTime: `${designYear}-${String(designMonth).padStart(2, '0')}-${String(designDay).padStart(2, '0')}T${String(Math.floor(designHour)).padStart(2, '0')}:${String(Math.round((designHour % 1) * 60)).padStart(2, '0')}`,
         sun: designPos.sun,
         earth: designPos.earth,
         moon: designPos.moon,
@@ -726,7 +739,7 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0) {
     },
     useEphemeris: true,
     summary: `${TYPES[type].name} with ${AUTHORITIES[authority].name}, ${profileInfo.name} Profile`,
-    note: 'Calculated using Meeus algorithms (all 13 planetary positions)'
+    note: 'Calculated with astronomy-engine (VSOP87) — all 13 activation points, design at exactly 88° solar arc'
   };
 }
 
@@ -850,11 +863,37 @@ function longitudeToTone(longitude) {
 }
 
 /**
+ * Get the Base (1-5) from a zodiac longitude.
+ * Note the 6/6/6/5 subdivision: each tone divides into FIVE bases
+ * (0.026041667° / 5 = 0.005208333°), giving 1,080 positions per gate.
+ */
+function longitudeToBase(longitude) {
+  const normalizedLong = ((longitude % 360) + 360) % 360;
+  const adjustedLong = ((normalizedLong - GATE_WHEEL_OFFSET + 360) % 360);
+  const withinGate = adjustedLong % 5.625;
+  const withinLine = withinGate % 0.9375;
+  const withinColor = withinLine % 0.15625;
+  const withinTone = withinColor % 0.026041667;
+  const base = Math.floor(withinTone / 0.005208333) + 1;
+  return Math.min(base, 5);
+}
+
+/**
  * Calculate Variable (Four Arrows)
- * - Top Left (Determination): Design Sun Color → Left (1-3) or Right (4-6)
- * - Bottom Left (Environment): Design Node Color → Left (1-3) or Right (4-6)
- * - Top Right (Perspective): Personality Sun Color → Left (1-3) or Right (4-6)
- * - Bottom Right (Motivation): Personality Node Color → Left (1-3) or Right (4-6)
+ *
+ * Canonical mapping (verified against multiple PHS/Rave Psychology sources):
+ * - Top Left (Determination / Digestion): DESIGN SUN — Color selects the
+ *   digestion type; Tone gives the arrow direction and the Cognition.
+ * - Bottom Left (Environment): DESIGN NODES — Color selects the environment
+ *   type; Tone gives the arrow direction.
+ * - Top Right (Motivation): PERSONALITY SUN — Color selects the motivation
+ *   type; Tone gives the arrow direction.
+ * - Bottom Right (Perspective / View): PERSONALITY NODES — Color selects the
+ *   view type; Tone gives the arrow direction.
+ *
+ * Arrow direction comes from the TONE: tones 1-3 → left (active, focused,
+ * strategic), tones 4-6 → right (passive, receptive, peripheral).
+ * Color does NOT determine direction.
  */
 function calculateVariable(personalityPos, designPos) {
   const personalitySunLong = personalityPos.sun.longitude;
@@ -864,47 +903,48 @@ function calculateVariable(personalityPos, designPos) {
 
   const determinationColor = longitudeToColor(designSunLong);
   const environmentColor = longitudeToColor(designNodeLong);
-  const perspectiveColor = longitudeToColor(personalitySunLong);
-  const motivationColor = longitudeToColor(personalityNodeLong);
+  const motivationColor = longitudeToColor(personalitySunLong);
+  const perspectiveColor = longitudeToColor(personalityNodeLong);
 
   const determinationTone = longitudeToTone(designSunLong);
   const environmentTone = longitudeToTone(designNodeLong);
-  const perspectiveTone = longitudeToTone(personalitySunLong);
-  const motivationTone = longitudeToTone(personalityNodeLong);
+  const motivationTone = longitudeToTone(personalitySunLong);
+  const perspectiveTone = longitudeToTone(personalityNodeLong);
 
-  // Left (1-3) = active/strategic/focused; Right (4-6) = passive/receptive/peripheral
-  const isLeft = (color) => color <= 3;
+  // Direction from TONE: 1-3 = left (active/strategic), 4-6 = right (receptive)
+  const isLeft = (tone) => tone <= 3;
 
   const arrows = {
     determination: {
-      arrow: isLeft(determinationColor) ? 'left' : 'right',
+      arrow: isLeft(determinationTone) ? 'left' : 'right',
       color: determinationColor,
       tone: determinationTone,
       ...DETERMINATION_TYPES[determinationColor],
       cognition: COGNITION_TYPES[determinationTone]
     },
     environment: {
-      arrow: isLeft(environmentColor) ? 'left' : 'right',
+      arrow: isLeft(environmentTone) ? 'left' : 'right',
       color: environmentColor,
       tone: environmentTone,
       ...ENVIRONMENT_TYPES[environmentColor]
     },
-    perspective: {
-      arrow: isLeft(perspectiveColor) ? 'left' : 'right',
-      color: perspectiveColor,
-      tone: perspectiveTone,
-      ...PERSPECTIVE_TYPES[perspectiveColor]
-    },
     motivation: {
-      arrow: isLeft(motivationColor) ? 'left' : 'right',
+      arrow: isLeft(motivationTone) ? 'left' : 'right',
       color: motivationColor,
       tone: motivationTone,
       ...MOTIVATION_TYPES[motivationColor]
+    },
+    perspective: {
+      arrow: isLeft(perspectiveTone) ? 'left' : 'right',
+      color: perspectiveColor,
+      tone: perspectiveTone,
+      ...PERSPECTIVE_TYPES[perspectiveColor]
     }
   };
 
-  // Build the four-arrow notation (e.g., "LR RL" = Left-Right Right-Left)
-  const notation = `${arrows.determination.arrow[0].toUpperCase()}${arrows.environment.arrow[0].toUpperCase()} ${arrows.perspective.arrow[0].toUpperCase()}${arrows.motivation.arrow[0].toUpperCase()}`;
+  // Four-arrow notation in display order:
+  // [Determination, Environment] (left/Design column), [Motivation, Perspective] (right/Personality column)
+  const notation = `${arrows.determination.arrow[0].toUpperCase()}${arrows.environment.arrow[0].toUpperCase()} ${arrows.motivation.arrow[0].toUpperCase()}${arrows.perspective.arrow[0].toUpperCase()}`;
 
   return {
     ...arrows,
@@ -1177,5 +1217,5 @@ export function calculateGeneKeys(humanDesignResult) {
   };
 }
 
-export { GATES, CHANNELS, CENTERS, TYPES, PROFILES, AUTHORITIES, CIRCUIT_GROUPS, LINE_NAMES, longitudeToGate, longitudeToLine, longitudeToColor, longitudeToTone };
+export { GATES, CHANNELS, CENTERS, TYPES, PROFILES, AUTHORITIES, CIRCUIT_GROUPS, LINE_NAMES, longitudeToGate, longitudeToLine, longitudeToColor, longitudeToTone, longitudeToBase };
 export default calculateHumanDesign;

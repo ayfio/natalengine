@@ -7,9 +7,10 @@
  * Reference: https://github.com/cosinekitty/astronomy
  *
  * Calculates:
- * - Sun and Moon positions (high accuracy)
+ * - Sun, Earth (Sun + 180°) and Moon positions (high accuracy)
  * - All major planets: Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto
- * - Lunar Nodes (Mean node calculation)
+ * - Lunar Nodes (True node by default: mean node + Meeus perturbation terms;
+ *   mean node available via options.nodeType = 'mean')
  * - Ascendant and Midheaven from sidereal time
  */
 
@@ -207,8 +208,13 @@ export function formatDegree(longitude) {
 /**
  * Calculate all planetary positions for a birth chart
  * Uses astronomy-engine for VSOP87-level accuracy (±1 arcminute)
+ *
+ * @param {object} [options]
+ * @param {('true'|'mean')} [options.nodeType='true'] - Lunar node flavor.
+ *   True (osculating) node is the dominant Human Design convention; mean
+ *   node is exposed for QA against charts produced with that setting.
  */
-export function calculateBirthPositions(year, month, day, hour = 12, timezone = 0, latitude = null, longitude = null) {
+export function calculateBirthPositions(year, month, day, hour = 12, timezone = 0, latitude = null, longitude = null, options = {}) {
   // Convert local time to UT
   const utHour = hour - timezone;
 
@@ -307,16 +313,25 @@ export function calculateBirthPositions(year, month, day, hour = 12, timezone = 
   nodeCorrection +=  0.1176 * Math.sin(2 * F_rad);
   nodeCorrection += -0.0801 * Math.sin(2 * (Mprime_rad - F_rad));
 
-  const northNodeLong = normalizeAngle(meanNode + nodeCorrection);
+  const useMeanNode = options.nodeType === 'mean';
+  const northNodeLong = normalizeAngle(useMeanNode ? meanNode : meanNode + nodeCorrection);
   const southNodeLong = normalizeAngle(northNodeLong + 180);
+
+  const earthLong = normalizeAngle(sunEcl.elon + 180);
 
   const result = {
     julianDay: jd,
+    nodeType: useMeanNode ? 'mean' : 'true',
     sun: {
       longitude: sunEcl.elon,
       latitude: sunEcl.elat,
       sign: getZodiacSign(sunEcl.elon),
       degree: formatDegree(sunEcl.elon)
+    },
+    earth: {
+      longitude: earthLong,
+      sign: getZodiacSign(earthLong),
+      degree: formatDegree(earthLong)
     },
     moon: {
       longitude: moonEcl.elon,

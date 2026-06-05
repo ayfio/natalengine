@@ -46,18 +46,18 @@ export const INCARNATION_CROSSES = {
   11: ['Eden', 'Ideas', 'Education'],
   12: ['Eden', 'Articulation', 'Education'],
   13: ['The Sphinx', 'Listening', 'The Masks'],
-  14: ['Contagion', 'Power Skills', 'Uncertainty'],
+  14: ['Contagion', 'Empowering', 'Uncertainty'],
   15: ['The Vessel of Love', 'Extremes', 'Prevention'],
   16: ['Planning', 'Experimentation', 'Identification'],
   17: ['Service', 'Opinions', 'Upheaval'],
   18: ['Service', 'Correction', 'Upheaval'],
-  19: ['The Four Ways', 'Wanting', 'Refinement'],
+  19: ['The Four Ways', 'Need', 'Refinement'],
   20: ['The Sleeping Phoenix', 'The Now', 'Duality'],
   21: ['Tension', 'Control', 'Endeavor'],
   22: ['Rulership', 'Grace', 'Informing'],
   23: ['Explanation', 'Assimilation', 'Dedication'],
   24: ['The Four Ways', 'Rationalization', 'Incarnation'],
-  25: ['The Vessel of Love', 'Innocence', 'The Spirit'],
+  25: ['The Vessel of Love', 'Innocence', 'Healing'],
   26: ['Rulership', 'The Trickster', 'Confrontation'],
   27: ['The Unexpected', 'Caring', 'Alignment'],
   28: ['The Unexpected', 'Risks', 'Alignment'],
@@ -65,7 +65,7 @@ export const INCARNATION_CROSSES = {
   30: ['Contagion', 'Fates', 'Industry'],
   31: ['The Unexpected', 'Influence', 'The Alpha'],
   32: ['Maya', 'Conservation', 'Limitation'],
-  33: ['The Four Ways', 'Privacy', 'Refinement'],
+  33: ['The Four Ways', 'Retreat', 'Refinement'],
   34: ['The Sleeping Phoenix', 'Power', 'Duality'],
   35: ['Consciousness', 'Experience', 'Separation'],
   36: ['Eden', 'Crisis', 'The Plane'],
@@ -78,7 +78,7 @@ export const INCARNATION_CROSSES = {
   43: ['Explanation', 'Insight', 'Dedication'],
   44: ['The Four Ways', 'Alertness', 'Incarnation'],
   45: ['Rulership', 'Possession', 'Confrontation'],
-  46: ['The Vessel of Love', 'Serendipity', 'The Spirit'],
+  46: ['The Vessel of Love', 'Serendipity', 'Healing'],
   47: ['Rulership', 'Oppression', 'Informing'],
   48: ['Tension', 'Depth', 'Endeavor'],
   49: ['Explanation', 'Principles', 'Revolution'],
@@ -91,7 +91,7 @@ export const INCARNATION_CROSSES = {
   56: ['Laws', 'Stimulation', 'Distraction'],
   57: ['Penetration', 'Intuition', 'The Clarion'],
   58: ['Service', 'Vitality', 'Demands'],
-  59: ['The Sleeping Phoenix', 'Sexuality', 'Spirit'],
+  59: ['The Sleeping Phoenix', 'Strategy', 'Spirit'],
   60: ['Laws', 'Limitation', 'Distraction'],
   61: ['Maya', 'Thinking', 'Obscuration'],
   62: ['Maya', 'Details', 'Obscuration'],
@@ -101,11 +101,16 @@ export const INCARNATION_CROSSES = {
 
 /**
  * Get the full Incarnation Cross name
+ *
+ * Canonical format: "Right Angle Cross of the Sphinx (13/7 | 1/2)" — the
+ * gates quartet is Personality Sun/Earth | Design Sun/Earth.
+ *
  * @param {number} personalitySunGate - The Personality Sun gate number
  * @param {string} profile - The profile string (e.g., "6/2")
+ * @param {number[]} [gates] - Optional [pSun, pEarth, dSun, dEarth] for the full name
  * @returns {object} Cross information
  */
-export function getIncarnationCross(personalitySunGate, profile) {
+export function getIncarnationCross(personalitySunGate, profile, gates = null) {
   const angle = getAngleFromProfile(profile);
   const crossNames = INCARNATION_CROSSES[personalitySunGate];
 
@@ -138,11 +143,15 @@ export function getIncarnationCross(personalitySunGate, profile) {
       prefix = 'Cross of';
   }
 
+  // "The Sphinx" → "the Sphinx" mid-sentence
+  const displayName = name.startsWith('The ') ? 'the ' + name.slice(4) : name;
+  const quartet = gates && gates.length === 4 ? ` (${gates[0]}/${gates[1]} | ${gates[2]}/${gates[3]})` : '';
+
   return {
     angle,
     angleName: angle === 'right' ? 'Right Angle' : angle === 'left' ? 'Left Angle' : 'Juxtaposition',
     name,
-    fullName: `The ${prefix} ${name}`
+    fullName: `${prefix} ${displayName}${quartet}`
   };
 }
 

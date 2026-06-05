@@ -1,6 +1,6 @@
 {
   "name": "natalengine",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Birth chart calculator for Western Astrology, Vedic (Jyotish), Human Design, and Gene Keys. Clean data output for apps and AI integrations.",
   "type": "module",
   "main": "src/index.js",
@@ -18,7 +18,9 @@
     "natalengine-mcp": "src/mcp/index.js"
   },
   "files": [
-    "src"
+    "src",
+    "!src/main.js",
+    "!src/styles.css"
   ],
   "scripts": {
     "dev": "vite",

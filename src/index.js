@@ -60,6 +60,10 @@ export {
 // Lower-level astronomy functions
 export { calculateBirthPositions, getZodiacSign } from './calculators/astronomy.js';
 
+// Timezone & geocoding (the accurate path for birth-data entry —
+// IANA-historical offsets, not longitude estimation)
+export { searchPlaces, resolveUtcOffset, formatUtcOffset } from './timezone.js';
+
 // Human Design transit and team analysis
 export { calculateHDTransits, calculateTransitGates } from './calculators/hd-transits.js';
 export { analyzePenta } from './calculators/penta.js';
@@ -77,7 +81,8 @@ export {
   longitudeToGate,
   longitudeToLine,
   longitudeToColor,
-  longitudeToTone
+  longitudeToTone,
+  longitudeToBase
 } from './calculators/humandesign.js';
 
 // Human Design content data

@@ -55,7 +55,8 @@ export function getProfiles() {
  * @param {Object} [profile.location] - Location data
  * @param {number} profile.location.lat - Latitude
  * @param {number} profile.location.lon - Longitude
- * @param {number} profile.location.timezone - UTC offset
+ * @param {number} profile.location.timezone - UTC offset in effect at birth
+ * @param {string} [profile.location.iana] - IANA timezone (e.g. "America/Denver")
  * @param {string} [profile.location.name] - Location display name
  * @returns {Object} The saved profile with id
  */
@@ -73,6 +74,7 @@ export function saveProfile(profile) {
       lat: profile.location.lat,
       lon: profile.location.lon,
       timezone: profile.location.timezone,
+      iana: profile.location.iana || null,
       name: profile.location.name || null
     } : null,
     createdAt: profile.createdAt || now,
