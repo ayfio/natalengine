@@ -52,6 +52,7 @@ export function getProfiles() {
  * @param {string} profile.name - Display name ("Me", "Partner", etc.)
  * @param {string} profile.birthDate - Birth date "YYYY-MM-DD"
  * @param {string} profile.birthTime - Birth time "HH:MM"
+ * @param {boolean} [profile.timeUnknown] - Birth time is unknown (birthTime is a placeholder)
  * @param {Object} [profile.location] - Location data
  * @param {number} profile.location.lat - Latitude
  * @param {number} profile.location.lon - Longitude
@@ -70,6 +71,7 @@ export function saveProfile(profile) {
     name: profile.name || 'Unnamed Profile',
     birthDate: profile.birthDate,
     birthTime: profile.birthTime || '12:00',
+    timeUnknown: !!profile.timeUnknown,
     location: profile.location ? {
       lat: profile.location.lat,
       lon: profile.location.lon,

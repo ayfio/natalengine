@@ -720,8 +720,15 @@ export function calculateHumanDesign(birthDate, birthHour = 12, timezone = 0, op
       },
       design: {
         date: `${designYear}-${String(designMonth).padStart(2, '0')}-${String(designDay).padStart(2, '0')}`,
-        // Local time (birth timezone) of the exact 88°-solar-arc moment
-        dateTime: `${designYear}-${String(designMonth).padStart(2, '0')}-${String(designDay).padStart(2, '0')}T${String(Math.floor(designHour)).padStart(2, '0')}:${String(Math.round((designHour % 1) * 60)).padStart(2, '0')}`,
+        // Local time (birth timezone) of the exact 88°-solar-arc moment.
+        // Round to whole minutes first so 59.7' carries into the hour
+        // instead of printing ":60".
+        dateTime: (() => {
+          const totalMinutes = Math.round(designHour * 60);
+          const hh = Math.floor(totalMinutes / 60) % 24;
+          const mm = totalMinutes % 60;
+          return `${designYear}-${String(designMonth).padStart(2, '0')}-${String(designDay).padStart(2, '0')}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+        })(),
         sun: designPos.sun,
         earth: designPos.earth,
         moon: designPos.moon,

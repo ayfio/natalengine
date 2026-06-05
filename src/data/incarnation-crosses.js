@@ -102,7 +102,7 @@ export const INCARNATION_CROSSES = {
 /**
  * Get the full Incarnation Cross name
  *
- * Canonical format: "Right Angle Cross of the Sphinx (13/7 | 1/2)" — the
+ * Canonical format: "Right Angle Cross of the Sphinx (1/2 | 7/13)" — the
  * gates quartet is Personality Sun/Earth | Design Sun/Earth.
  *
  * @param {number} personalitySunGate - The Personality Sun gate number
