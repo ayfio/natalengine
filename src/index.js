@@ -85,6 +85,13 @@ export {
   longitudeToBase
 } from './calculators/humandesign.js';
 
+// Pure SVG rendering (no DOM — runs in Node, Workers, browsers)
+export {
+  default as renderBodygraphSVG,
+  renderChartCardSVG,
+  THEMES as BODYGRAPH_THEMES
+} from './render/bodygraph-svg.js';
+
 // Human Design content data
 export { GATE_DESCRIPTIONS } from './data/gate-descriptions.js';
 export { CHANNEL_DESCRIPTIONS } from './data/channel-descriptions.js';
