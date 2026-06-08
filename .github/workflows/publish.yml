@@ -25,10 +25,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # NOTE: do NOT set registry-url here. setup-node would write an .npmrc
+      # with a placeholder _authToken, which makes npm skip the OIDC exchange
+      # and send a bogus credential → 404. npm publishes to the default
+      # registry (registry.npmjs.org) and does OIDC on its own.
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
 
       # Guarantee npm >= 11.5.1 (OIDC trusted publishing); some Node 24
       # builds bundle an older npm.
