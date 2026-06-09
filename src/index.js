@@ -94,6 +94,7 @@ export {
 
 // Human Design content data
 export { GATE_DESCRIPTIONS } from './data/gate-descriptions.js';
+export { LINE_DESCRIPTIONS } from './data/gate-lines.js';
 export { CHANNEL_DESCRIPTIONS } from './data/channel-descriptions.js';
 
 // Vedic astrology data and functions
