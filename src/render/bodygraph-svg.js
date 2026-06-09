@@ -268,4 +268,85 @@ export function renderChartCardSVG(chart, opts = {}) {
 </svg>`;
 }
 
+/**
+ * Render a vertical share card for Stories / Reels / TikTok (1080×1920) or a
+ * square post (1080×1080): identity at the top, bodygraph centered as the hero,
+ * branding at the bottom. Same purity guarantees as renderChartCardSVG —
+ * rasterize with resvg / sharp / a browser for a downloadable PNG.
+ *
+ * @param {object} chart - calculateHumanDesign() result
+ * @param {object} [opts]
+ * @param {string} [opts.name]
+ * @param {('story'|'square')} [opts.format='story']
+ * @param {('light'|'dark')} [opts.theme='light']
+ * @param {string} [opts.footer='openhumandesign.com'] - set '' to hide
+ * @param {string} [opts.fontFamily='Inter, system-ui, sans-serif']
+ */
+export function renderStoryCardSVG(chart, opts = {}) {
+  const dark = opts.theme === 'dark';
+  const bg = dark ? '#141210' : '#faf8f5';
+  const text = dark ? '#e8e4de' : '#1a1714';
+  const subtext = dark ? '#9e978e' : '#6b6560';
+  const accent = dark ? '#d4943a' : '#9a5e1c';
+  const font = opts.fontFamily || 'Inter, system-ui, sans-serif';
+
+  const TYPE_COLORS = {
+    'Generator': '#b98e2f',
+    'Manifesting Generator': '#c96f1e',
+    'Manifestor': '#b3422f',
+    'Projector': '#2471a3',
+    'Reflector': '#6c7a7b'
+  };
+  const typeColor = TYPE_COLORS[chart.type?.name] || text;
+
+  const square = opts.format === 'square';
+  const W = 1080;
+  const H = square ? 1080 : 1920;
+
+  // Render the bodygraph, read its viewBox so we can fit it precisely.
+  const full = renderBodygraphSVG(chart, { theme: opts.theme, gateNumbers: false, fontFamily: font });
+  const vbMatch = full.match(/viewBox="([^"]+)"/);
+  const [vx, vy, vw, vh] = (vbMatch ? vbMatch[1] : '0 0 300 340').split(/\s+/).map(Number);
+  const graph = full.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+
+  const name = opts.name ? escAttr(opts.name) : '';
+  const footer = opts.footer === undefined ? 'openhumandesign.com' : opts.footer;
+  const lines = [
+    chart.profile?.numbers ? `${chart.profile.numbers} ${chart.profile.name || ''}`.trim() : '',
+    chart.authority?.name || '',
+    chart.definition || ''
+  ].filter(Boolean);
+
+  const cx = W / 2;
+  let y = square ? 92 : 150;
+  const header = [];
+  if (name) { header.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="46" fill="${subtext}">${name}</text>`); y += square ? 80 : 104; }
+  header.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="${square ? 76 : 92}" font-weight="700" fill="${typeColor}">${escAttr(chart.type?.name || 'Human Design')}</text>`);
+  y += square ? 66 : 84;
+  for (const l of lines) { header.push(`<text x="${cx}" y="${y}" text-anchor="middle" font-size="40" fill="${text}">${escAttr(l)}</text>`); y += 56; }
+
+  // Fit the bodygraph within the space between the header and the footer,
+  // constrained by BOTH width and available height so it never overlaps.
+  const footY = H - (square ? 64 : 116);
+  const crossY = footY - 52;
+  const graphTop = y + (square ? 14 : 44);
+  const avail = (crossY - 34) - graphTop;
+  const maxW = square ? 740 : 940;
+  const scale = Math.min(maxW / vw, avail / vh);
+  const gW = vw * scale;
+  const tx = (W - gW) / 2 - vx * scale;
+  const ty = graphTop - vy * scale;
+  const cross = chart.incarnationCross?.name
+    ? `<text x="${cx}" y="${crossY}" text-anchor="middle" font-size="32" fill="${subtext}">Cross of ${escAttr(chart.incarnationCross.name.replace(/^The /, ''))}</text>` : '';
+  const brand = footer
+    ? `<text x="${cx}" y="${footY}" text-anchor="middle" font-size="36" font-weight="600" fill="${accent}">${escAttr(footer)}</text>` : '';
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+  <rect width="${W}" height="${H}" fill="${bg}"/>
+  <g font-family="${escAttr(font)}">${header.join('')}</g>
+  <g transform="translate(${tx.toFixed(2)}, ${ty.toFixed(2)}) scale(${scale.toFixed(4)})">${graph}</g>
+  <g font-family="${escAttr(font)}">${cross}${brand}</g>
+</svg>`;
+}
+
 export default renderBodygraphSVG;

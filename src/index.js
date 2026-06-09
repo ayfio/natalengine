@@ -89,6 +89,7 @@ export {
 export {
   default as renderBodygraphSVG,
   renderChartCardSVG,
+  renderStoryCardSVG,
   THEMES as BODYGRAPH_THEMES
 } from './render/bodygraph-svg.js';
 
