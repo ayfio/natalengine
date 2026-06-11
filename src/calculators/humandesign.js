@@ -1025,7 +1025,7 @@ function determineAuthority(definedCenters, hasSacral) {
  * Complete Gene Keys Shadow/Gift/Siddhi spectrum for all 64 keys
  * Source: Gene Keys by Richard Rudd
  */
-const GENE_KEY_SPECTRUM = {
+export const GENE_KEY_SPECTRUM = {
   1: ['Entropy', 'Freshness', 'Beauty'],
   2: ['Dislocation', 'Orientation', 'Unity'],
   3: ['Chaos', 'Innovation', 'Innocence'],

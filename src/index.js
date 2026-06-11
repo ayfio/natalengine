@@ -77,6 +77,7 @@ export {
   PROFILES,
   AUTHORITIES,
   CIRCUIT_GROUPS,
+  GENE_KEY_SPECTRUM,
   LINE_NAMES,
   longitudeToGate,
   longitudeToLine,
@@ -97,6 +98,8 @@ export {
 export { GATE_DESCRIPTIONS } from './data/gate-descriptions.js';
 export { LINE_DESCRIPTIONS } from './data/gate-lines.js';
 export { CHANNEL_DESCRIPTIONS } from './data/channel-descriptions.js';
+export { HEXAGRAM_DESCRIPTIONS } from './data/hexagram-descriptions.js'; // I Ching lens
+export { GENE_KEY_DESCRIPTIONS } from './data/gene-key-descriptions.js'; // Gene Keys lens
 
 // Vedic astrology data and functions
 export {
