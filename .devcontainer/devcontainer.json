@@ -1,0 +1,22 @@
+{
+  "name": "NatalEngine Neocities Build",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  
+  "forwardPorts": [5173],
+  
+  "postCreateCommand": "npm ci",
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "octref.vetur"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      }
+    }
+  }
+}
