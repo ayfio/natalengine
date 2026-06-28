@@ -5,3 +5,13 @@ dist
 .playwright-mcp/
 .env
 .npmrc
+
+# Сборка для Neocities
+dist-neocities/
+
+# Локальные конфиги
+*.local.js
+.env.local
+
+# Логи
+*.log
